@@ -1,0 +1,17 @@
+{
+  "extends": "expo/tsconfig.base",
+  "compilerOptions": {
+    "strict": true,
+    "paths": {
+      "@/*": [
+        "./*"
+      ]
+    }
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    ".expo/types/**/*.ts",
+    "expo-env.d.ts"
+, "src/app/_layout.tsx", "src/app/(tabs)/searchScreen.tsx", "src/app/(tabs)/optionScreen.tsx", "src/app/(tabs)/libraryScreen.tsx", "src/app/(tabs)/_layout.tsx"  ]
+}
