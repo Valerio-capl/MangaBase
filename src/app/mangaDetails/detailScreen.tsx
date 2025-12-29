@@ -4,8 +4,7 @@ import {
   TouchableOpacity, FlatList, Dimensions 
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { icons } from '@/constants/icons'; // Assicurati di avere le icone, altrimenti usa Text per 'Indietro'
-import MangaWorld from '@/src/api/mangaworld/mangaworld';
+import SourceManager from '@/src/api/sourceManager';
 
 interface Chapter {
   id: string;
@@ -29,7 +28,7 @@ interface MangaDetailsData {
 
 export default function MangaDetails() {
   const router = useRouter();
-  const { id, slug } = useLocalSearchParams();
+  const { id, slug, source } = useLocalSearchParams();
   const [manga, setManga] = useState<MangaDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(10); //limit for chapter load then readmore
@@ -41,7 +40,7 @@ export default function MangaDetails() {
       setLoading(true);
       try {
         
-        const data = await MangaWorld.getMangaDetails(id.toString(), slug.toString());
+        const data = await SourceManager.getMangaDetails(source.toString() ,id.toString(), slug.toString());
         setManga(data);
       } catch (error) {
         console.error("Errore dettagli:", error);
@@ -57,7 +56,8 @@ export default function MangaDetails() {
       params: { 
         mangaId: id, 
         slug: slug, 
-        chapterId: chapter.id 
+        chapterId: chapter.id,
+        source:source
       }
     });
   };
@@ -103,8 +103,8 @@ export default function MangaDetails() {
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{ paddingBottom: 40 }}
         ListHeaderComponent={() => (
+          //header
           <View style={styles.headerContainer}>
-            {/* Sezione Superiore: Cover e Metadati */}
             <View style={styles.topSection}>
               <Image 
                 source={{ uri: manga.coverUrl }} 
