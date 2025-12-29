@@ -1,0 +1,28 @@
+{
+  "name": "MangaKatana",
+  "baseUrl": "https://mangakatana.com",
+  "lang": "en",
+  "selectors": {
+    "search": {
+      "resultCard": "#book_list .item",
+      "title": ".text .title a",
+      "url": ".text .title a",
+      "cover": ".media .wrap_img img"
+    },
+    "manga": {
+      "title": "h1.heading",
+      "cover": ".media .cover img",
+      "description": ".summary p",
+      "metaRow": ".meta .d-row-small",
+      "metaLabel": ".label",
+      "metaValue": ".value",
+      "chapterRow": ".chapters tr",
+      "chapterLink": ".chapter a",
+      "chapterDate": ".update_time"
+    },
+    "chapter": {
+      "scriptVars": ["thzq", "ytaw"],
+      "imagesDOM": "#imgs .wrap_img img"
+    }
+  }
+}
