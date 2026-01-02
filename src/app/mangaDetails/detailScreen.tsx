@@ -1,10 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import { 
   View, Text, StyleSheet, Image, ActivityIndicator, 
-  TouchableOpacity, FlatList, Dimensions 
+  TouchableOpacity, FlatList,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import SourceManager from '@/src/api/sourceManager';
+import { icons } from '@/constants/icons';
 
 interface Chapter {
   id: string;
@@ -33,6 +35,7 @@ export default function MangaDetails() {
   const [loading, setLoading] = useState(true);
   const [limit, setLimit] = useState(10); //limit for chapter load then readmore
   const [isDescExpanded, setIsDescExpanded] = useState(false);
+  const [isSaved, setIsSaved] = useState(false);
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -50,6 +53,24 @@ export default function MangaDetails() {
     }; fetchDetails();
   }, [id, slug]);
 
+  useEffect(() => {
+    const checkStatus = async () => {
+      if (!id) return;
+      try {
+        const storedLibrary = await AsyncStorage.getItem('myLibrary');
+        if (storedLibrary) {
+          const library = JSON.parse(storedLibrary);
+          // Controlla se l'ID esiste già nell'array
+          const exists = library.some((item: any) => item.id === id);
+          setIsSaved(exists);
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+    checkStatus();
+  }, [id]);
+
   const handleChapterPress = (chapter: Chapter) => {
     router.push({
       pathname: "../readerScreen/readerScreen",
@@ -62,6 +83,31 @@ export default function MangaDetails() {
     });
   };
 
+  const handleSavePress = async(mangaData: MangaDetailsData)=>{
+    try{
+      const existingLibrary = await AsyncStorage.getItem('myLibrary');
+      let library = existingLibrary ? JSON.parse(existingLibrary) : [];
+
+      if (isSaved) {
+        library = library.filter((item: any) => item.id !== mangaData.id);
+        setIsSaved(false);
+      }else{
+        const mangaSave = {
+          id: mangaData.id,
+          slug: mangaData.slug,
+          title: mangaData.title,
+          coverUrl: mangaData.coverUrl,
+          source: source
+        };
+        library.push(mangaSave);
+        setIsSaved(true);
+      }
+      await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
+
+    } catch (error) {
+      console.error("Errore nel salvataggio:", error);}
+  };
+
   const showAllChapters = () => {
     if (manga) {
       setLimit(manga.chapters.length);
@@ -72,16 +118,17 @@ export default function MangaDetails() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#A8B5DB" />
-        <Text style={{color: '#A8B5DB', marginTop: 10}}>Caricamento dettagli...</Text>
+        <Text style={{color: '#A8B5DB', marginTop: 10}}>Loading Details...</Text>
       </View>
     );
   }
+
   if (!manga) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: 'white' }}>Nessun dato trovato.</Text>
+        <Text style={{ color: 'white' }}>Data not found.</Text>
         <TouchableOpacity onPress={() => router.back()} style={{marginTop: 20}}>
-          <Text style={{color: '#A8B5DB'}}>Torna indietro</Text>
+          <Text style={{color: '#A8B5DB'}}>go back</Text>
         </TouchableOpacity>
       </View>
     );
@@ -97,6 +144,7 @@ export default function MangaDetails() {
           <Text style={styles.backText}>← Indietro</Text>
         </TouchableOpacity>
       </View>
+    
       <FlatList
         data={displayedChapters}
         keyExtractor={(item) => item.id}
@@ -106,20 +154,31 @@ export default function MangaDetails() {
           //header
           <View style={styles.headerContainer}>
             <View style={styles.topSection}>
+              
+
               <Image 
                 source={{ uri: manga.coverUrl }} 
                 style={styles.coverImage} 
                 resizeMode="cover" 
               />
               <View style={styles.infoSection}>
-                <Text style={styles.title} numberOfLines={3}>{manga.title}</Text>
-                
+                <View style={styles.titleRow}>
+                  <Text style={styles.title} numberOfLines={3}>{manga.title}</Text>
+
+                  <TouchableOpacity onPress={() => handleSavePress(manga)}>
+                    <Image
+                      source={isSaved ? icons.saveFilled : icons.save}
+                      style={styles.saveIcon}
+                      resizeMode="contain"
+                    />
+                  </TouchableOpacity>
+                </View>
                 <Text style={styles.metaText}>
-                  <Text style={styles.label}>Autore: </Text>{manga.author}</Text>
+                  <Text style={styles.label}>Author: </Text>{manga.author}</Text>
                 <Text style={styles.metaText}>
-                  <Text style={styles.label}>Anno: </Text>{manga.year}</Text>
+                  <Text style={styles.label}>Year: </Text>{manga.year}</Text>
                 <Text style={styles.metaText}>
-                  <Text style={styles.label}>Stato: </Text>{manga.status}</Text>
+                  <Text style={styles.label}>Status: </Text>{manga.status}</Text>
               </View>
             </View>
 
@@ -133,7 +192,7 @@ export default function MangaDetails() {
                     style={{ marginTop: 8 }}
                   >
                     <Text style={{ color: '#A8B5DB', fontWeight: 'bold', fontSize: 13 }}>
-                      {isDescExpanded ? 'Mostra meno' : 'Leggi di più...'}
+                      {isDescExpanded ? 'Show less' : 'Show more...'}
                     </Text>
                   </TouchableOpacity>
                 )}
@@ -141,7 +200,7 @@ export default function MangaDetails() {
             ) : null}
 
             <View style={styles.chaptersHeader}>
-              <Text style={styles.sectionTitle}>Capitoli ({manga.chapters.length})</Text>
+              <Text style={styles.sectionTitle}>Chapters ({manga.chapters.length})</Text>
             </View>
           </View>
         )}
@@ -154,7 +213,7 @@ export default function MangaDetails() {
             activeOpacity={0.7}
           >
             <View>
-              <Text style={styles.chapterNumber}>Capitolo {item.number}</Text>
+              <Text style={styles.chapterNumber}>chapter {item.number}</Text>
               {/* Mostra il titolo del capitolo solo se diverso da "Capitolo X" */}
               {item.title && !item.title.toLowerCase().includes(`capitolo ${item.number}`) && (
                  <Text style={styles.chapterTitle}>{item.title}</Text>
@@ -170,7 +229,7 @@ export default function MangaDetails() {
             {hasMoreChapters && (
               <TouchableOpacity style={styles.loadMoreButton} onPress={showAllChapters}>
                 <Text style={styles.loadMoreText}>
-                  Vedi altri {manga.chapters.length - limit} capitoli ↓
+                  Show more {manga.chapters.length - limit} chapters ↓
                 </Text>
               </TouchableOpacity>
             )}
@@ -224,16 +283,26 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)'
   },
+  titleRow:{
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom:12,
+    alignItems: 'flex-start',
+  },
   infoSection: {
     flex: 1,
     marginLeft: 20,
     justifyContent: 'flex-start', // Allinea in alto
   },
+  saveIcon: {
+    width: 24,
+    height: 24,
+    tintColor: '#A8B5DB',
+  },
   title: {
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 12,
     lineHeight: 28,
   },
   metaText: {
@@ -269,7 +338,6 @@ const styles = StyleSheet.create({
     borderBottomColor: 'rgba(255,255,255,0.1)',
     paddingBottom: 10,
   },
-  // Stili Capitoli
   chapterItem: {
     flexDirection: 'row',
     justifyContent: 'space-between',
