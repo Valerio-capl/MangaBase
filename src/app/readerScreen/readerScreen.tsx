@@ -78,7 +78,7 @@ export default function ReaderScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={{ marginTop: 10, color: 'white' }}>Caricamento pagine...</Text>
+        <Text style={{ marginTop: 10, color: 'white' }}>Loading pages...</Text>
       </View>
     );
   }
@@ -86,7 +86,7 @@ export default function ReaderScreen() {
   if (!images || images.length === 0) {
     return (
       <View style={styles.center}>
-        <Text style={{ color: 'white' }}>Nessuna immagine trovata.</Text>
+        <Text style={{ color: 'white' }}>No images found.</Text>
       </View>
     );
   }

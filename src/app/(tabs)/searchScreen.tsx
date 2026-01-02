@@ -128,7 +128,7 @@ const searchScreen = () => {
             </View>
           )}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>Nessun risultato trovato.</Text>
+            <Text style={styles.emptyText}>No results found.</Text>
           }
           ListFooterComponent={
             loading ? <ActivityIndicator size="small" color="#0000ff" style={{marginTop: 10}}/> : null
