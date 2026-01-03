@@ -3,6 +3,7 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity, Dimensions } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import SearchBar from "@/src/components/searchBar";
+import MangaCard from '@/src/components/mangaCard';
 import SourceManager from '@/src/api/sourceManager';
 
 const { width } = Dimensions.get('window');
@@ -65,33 +66,6 @@ const searchScreen = () => {
     });
   };
 
-  const renderMangaCard = (item: MangaResult) => (
-    <TouchableOpacity 
-      key={item.id} 
-      onPress={() => handleMangaPress(item)}
-      style={styles.card}
-    >
-      <View style={styles.imageContainer}>
-        {item.coverUrl ? (
-          <Image 
-            source={{ uri: item.coverUrl }} 
-            style={styles.coverImage} 
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.coverImage, { backgroundColor: '#333' }]} />
-        )}
-      </View>
-      <Text 
-        style={styles.title} 
-        numberOfLines={1} 
-        ellipsizeMode="tail"
-      >
-        {item.title}
-      </Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -123,7 +97,11 @@ const searchScreen = () => {
 
               {/* GRIGLIA DEI MANGA */}
               <View style={styles.gridContainer}>
-                {item.data.map((manga) => renderMangaCard(manga))}
+                {item.data.map((manga) => <MangaCard
+                    key={`${manga.source}-${manga.id}`}
+                    item={manga}
+                    onPress={()=>handleMangaPress(manga)}
+                  />)}
               </View>
             </View>
           )}
@@ -153,7 +131,6 @@ const styles = StyleSheet.create({
   },
   sectionContainer: {
     marginBottom: 25,
-    paddingHorizontal: 10,
   },
   sectionHeader: {
     flexDirection: 'row',
@@ -162,7 +139,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   sectionTitle: {
-    color: '#A8B5DB', // Colore azzurrino/chiaro per risaltare
+    color: '#A8B5DB',
     fontSize: 18,
     fontWeight: 'bold',
     marginRight: 10,
@@ -175,67 +152,22 @@ const styles = StyleSheet.create({
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
-    justifyContent: 'space-evenly', // Distribuisce le card
+    justifyContent: 'space-evenly',
     gap:10,
   },
   divider: {
     flex: 1,
     height: 1,
-    backgroundColor: '#ffffff1a', // Linea sottile
+    backgroundColor: '#ffffff1a',
   },
   resultCount: {
     color: '#555',
     fontSize: 12,
     marginLeft: 10,
   },
-  card: {
-    width: '44%',
-    marginBottom: 15,
-    alignItems: 'center',
-
-  },
-  imageContainer: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    overflow: 'hidden',
-    backgroundColor: '#2A2F45',
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#2A2F45'
-  },
-  coverImage: {
-    width:'100%',
-    height:'100%',
-  },
-  resultItem: {
-    flexDirection: 'row',
-    marginBottom: 16,
-    backgroundColor: 'rgba(255,255,255,0.05)',
-    borderRadius: 12,
-    overflow: 'hidden',
-    padding: 8,
-  },
-  textContainer: {
-    flex: 1,
-    marginLeft: 12,
-    justifyContent: 'center',
-  },
-  title: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center', // Testo centrato sotto l'immagine
-    width: '100%',
-  },
   emptyText: {
     color: '#888',
     textAlign: 'center',
     marginTop: 40,
   },
-  sourceText: {
-    color: '#fff',
-    fontSize: 10,
-    fontWeight: 'bold',
-  }
 });

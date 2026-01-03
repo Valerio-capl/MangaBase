@@ -2,6 +2,7 @@ import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, 
 import React, {useCallback, useState} from 'react';
 import {useFocusEffect, useRouter} from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import MangaCard from '@/src/components/mangaCard';
 
 interface SavedManga {
   id: string;
@@ -54,30 +55,6 @@ const libraryScreen = () => {
     );
   }
 
-  const renderMangaCard = ({ item }: { item: SavedManga }) => (
-    <TouchableOpacity 
-      style={styles.card}
-      onPress={() => handleMangaPress(item)}
-      activeOpacity={0.7}
-    >
-      <View style={styles.imageContainer}>
-        {item.coverUrl ? (
-          <Image 
-            source={{ uri: item.coverUrl }} 
-            style={styles.coverImage} 
-            resizeMode="cover"
-          />
-        ) : (
-          <View style={[styles.coverImage, { backgroundColor: '#333' }]} />
-        )}
-      </View>
-      
-      <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-        {item.title}
-      </Text>
-    </TouchableOpacity>
-  );
-
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -97,7 +74,12 @@ const libraryScreen = () => {
           </View>
         }
 
-        renderItem={renderMangaCard}
+        renderItem={({ item }) => (
+          <MangaCard 
+            item={item} 
+            onPress={() => handleMangaPress(item)} 
+          />
+        )}
 
         />
     </View>
@@ -126,32 +108,6 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 24,
     fontWeight: 'bold',
-  },
-  card: {
-    width: '44%',
-    marginBottom: 15,
-    alignItems: 'center',
-  },
-  imageContainer: {
-    width: '100%',
-    height: 200,
-    borderRadius: 6,
-    overflow: 'hidden',
-    backgroundColor: '#2A2F45',
-    marginBottom: 6,
-    borderWidth: 1,
-    borderColor: '#2A2F45'
-  },
-  coverImage: {
-    width:'100%',
-    height:'100%',
-  },
-  title: {
-    color: 'white',
-    fontSize: 14,
-    fontWeight: '600',
-    textAlign: 'center',
-    width: '100%',
   },
   emptyContainer: {
     marginTop: 100,
