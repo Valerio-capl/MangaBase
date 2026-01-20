@@ -1,12 +1,14 @@
 import React, { useEffect, useState } from 'react';
 import { 
-  View, Text, StyleSheet, Image, ActivityIndicator, 
-  TouchableOpacity, FlatList,
+  View, Text, Image, ActivityIndicator, 
+  TouchableOpacity, FlatList, Alert,
 } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SourceManager from '@/src/api/sourceManager';
+import { DownloadManager } from '@/src/api/downloadManager';
 import { icons } from '@/constants/icons';
+import styles from "./styleScreen"
 
 interface Chapter {
   id: string;
@@ -30,12 +32,21 @@ interface MangaDetailsData {
 
 export default function MangaDetails() {
   const router = useRouter();
+
   const { id, slug, source } = useLocalSearchParams();
   const [manga, setManga] = useState<MangaDetailsData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [limit, setLimit] = useState(10); //limit for chapter load then readmore
+
+  const [limit, setLimit] = useState(10); // limit for chapter load then readmore
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+
+  const [selectionMode, setSelectionMode] = useState(false);
+  const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
+  const [isDownloading, setIsDownloading] = useState(false);
+  const [downloadStatus, setDownloadStatus] = useState("");
+  const [downloadedChapters, setDownloadedChapters] = useState<string[]>([]);
+  const [actionType, setActionType] = useState<'download' | 'delete'>('download'); 
 
   useEffect(() => {
     const fetchDetails = async () => {
@@ -60,7 +71,7 @@ export default function MangaDetails() {
         const storedLibrary = await AsyncStorage.getItem('myLibrary');
         if (storedLibrary) {
           const library = JSON.parse(storedLibrary);
-          // Controlla se l'ID esiste già nell'array
+          // controlla se l'ID esiste già nell'array
           const exists = library.some((item: any) => item.id === id);
           setIsSaved(exists);
         }
@@ -70,17 +81,80 @@ export default function MangaDetails() {
     };
     checkStatus();
   }, [id]);
+  useEffect(() => {
+    refreshDownloads();
+  }, [id]);
+
+  
+  const toggleSelectionMode = () => {
+    if (selectionMode) {
+      setSelectionMode(false);
+      setSelectedChapters([]);
+    } else {
+      setSelectionMode(true);
+    }
+  };
+  const activateDownloadMode = () => {
+    setActionType('download');
+    setSelectionMode(true);
+    setSelectedChapters([]);
+  };
+  const activateDeleteMode = () => {
+    setActionType('delete');
+    setSelectionMode(true);
+    setSelectedChapters([]);
+  };
 
   const handleChapterPress = (chapter: Chapter) => {
-    router.push({
-      pathname: "../readerScreen/readerScreen",
-      params: { 
-        mangaId: id, 
-        slug: slug, 
-        chapterId: chapter.id,
-        source:source
+    if(selectionMode){
+      if (actionType === 'delete') {
+         const isDownloaded = downloadedChapters.includes(chapter.id);
+         if (!isDownloaded) {
+             return;
+         }
       }
-    });
+      if(selectedChapters.includes(chapter.id)){
+        setSelectedChapters(selectedChapters.filter(id => id !== chapter.id));
+      } else {
+        setSelectedChapters([...selectedChapters, chapter.id]);
+      }
+    } else {
+      const isDownloaded = downloadedChapters.includes(chapter.id);
+      router.push({
+        pathname: "../readerScreen/readerScreen",
+        params: { 
+          mangaId: id, 
+          slug: slug, 
+          chapterId: chapter.id,
+          source: isDownloaded ? 'local' : source
+        }
+      });
+    }
+  };
+
+  const handleDelete = async () => {
+    if (selectedChapters.length === 0) return;
+    
+    Alert.alert(
+      "Elimina Download",
+      `Vuoi eliminare ${selectedChapters.length} capitoli dal dispositivo?`,
+      [
+        { text: "Annulla", style: "cancel" },
+        { 
+          text: "Elimina", 
+          style: "destructive",
+          onPress: async () => {
+             await DownloadManager.deleteChapters(id.toString(), selectedChapters);
+             await refreshDownloads(); 
+             
+             setSelectionMode(false);
+             setSelectedChapters([]);
+             setDownloadStatus("Capitoli eliminati");
+             setTimeout(() => setDownloadStatus(""), 2000);
+          }
+        }
+      ]
+    );
   };
 
   const handleSavePress = async(mangaData: MangaDetailsData)=>{
@@ -108,6 +182,35 @@ export default function MangaDetails() {
       console.error("Errore nel salvataggio:", error);}
   };
 
+  const startDownload = async () => {
+    if (selectedChapters.length === 0 || !manga) return;
+
+    const chaptersToDownload = manga.chapters.filter(ch => selectedChapters.includes(ch.id));
+    setIsDownloading(true);
+    setSelectionMode(false);
+    setDownloadStatus("downloading...");
+    const mangaForDownload = {
+        ...manga,
+        source: source
+    };
+
+    DownloadManager.downloadChapters(mangaForDownload, chaptersToDownload, (msg: string) => {
+        setDownloadStatus(msg);
+    }).then(async () => {
+        setIsDownloading(false);
+        setDownloadStatus("Download completed!");
+        setSelectedChapters([]);
+        await refreshDownloads();
+        setTimeout(() => setDownloadStatus(""), 3000);
+    });
+  };
+
+  const refreshDownloads = async () => {
+      if (!id) return;
+      const ids = await DownloadManager.getDownloadedChapterIds(id.toString());
+      setDownloadedChapters(ids);
+    };
+
   const showAllChapters = () => {
     if (manga) {
       setLimit(manga.chapters.length);
@@ -133,250 +236,202 @@ export default function MangaDetails() {
       </View>
     );
   }
-  const displayedChapters = manga.chapters.slice(0, limit);
+  const displayedChapters =(() =>{
+    if (selectionMode && actionType === 'delete') {
+      return manga.chapters.filter(ch => downloadedChapters.includes(ch.id));
+    }
+    if (selectionMode) {
+      return manga.chapters;
+    } 
+    return manga.chapters.slice(0, limit);
+  }) ();
   const hasMoreChapters = limit < manga.chapters.length;
 
 
   return (
     <View style={styles.container}>
       <View style={styles.navBar}>
-        <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Text style={styles.backText}>← Indietro</Text>
-        </TouchableOpacity>
+        {!selectionMode ? (
+           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+             <Text style={styles.backText}>Go Back</Text>
+           </TouchableOpacity>
+        ) : (
+           <TouchableOpacity onPress={toggleSelectionMode} style={styles.backButton}>
+             <Text style={[styles.backText, { color: '#FF6B6B' }]}>Cancel</Text>
+           </TouchableOpacity>
+        )}
+        
+        {/* Titolo centrato in modalità selezione */}
+        {selectionMode && (
+            <Text style={styles.selectionTitle} numberOfLines={1}>
+                {manga?.title}
+            </Text>
+        )}
       </View>
+      {(isDownloading || downloadStatus !== "") && (
+          <View style={styles.statusBanner}>
+              <Text style={{color: '#fff', fontSize: 12}}>{downloadStatus}</Text>
+          </View>
+      )}
     
       <FlatList
         data={displayedChapters}
         keyExtractor={(item) => item.id}
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={{ paddingBottom: 40 }}
+        contentContainerStyle={{ paddingBottom: 100 }}
         ListHeaderComponent={() => (
+          <View>
+            {!selectionMode && (
           //header
-          <View style={styles.headerContainer}>
-            <View style={styles.topSection}>
-              
+            <View style={styles.headerContainer}>
+              <View style={styles.topSection}>
+                
 
-              <Image 
-                source={{ uri: manga.coverUrl }} 
-                style={styles.coverImage} 
-                resizeMode="cover" 
-              />
-              <View style={styles.infoSection}>
-                <View style={styles.titleRow}>
-                  <Text style={styles.title} numberOfLines={3}>{manga.title}</Text>
+                <Image 
+                  source={{ uri: manga.coverUrl }} 
+                  style={styles.coverImage} 
+                  resizeMode="cover" 
+                />
+                <View style={styles.infoSection}>
+                  <View style={styles.titleRow}>
+                    <Text style={styles.title} numberOfLines={3}>{manga.title}</Text>
 
-                  <TouchableOpacity onPress={() => handleSavePress(manga)}>
-                    <Image
-                      source={isSaved ? icons.saveFilled : icons.save}
-                      style={styles.saveIcon}
-                      resizeMode="contain"
-                    />
-                  </TouchableOpacity>
+                    <TouchableOpacity onPress={() => handleSavePress(manga)}>
+                      <Image
+                        source={isSaved ? icons.saveFilled : icons.save}
+                        style={styles.saveIcon}
+                        resizeMode="contain"
+                      />
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={styles.metaText}>
+                    <Text style={styles.label}>Author: </Text>{manga.author}</Text>
+                  <Text style={styles.metaText}>
+                    <Text style={styles.label}>Year: </Text>{manga.year}</Text>
+                  <Text style={styles.metaText}>
+                    <Text style={styles.label}>Status: </Text>{manga.status}</Text>
                 </View>
-                <Text style={styles.metaText}>
-                  <Text style={styles.label}>Author: </Text>{manga.author}</Text>
-                <Text style={styles.metaText}>
-                  <Text style={styles.label}>Year: </Text>{manga.year}</Text>
-                <Text style={styles.metaText}>
-                  <Text style={styles.label}>Status: </Text>{manga.status}</Text>
               </View>
+
+              {manga.description ? (
+                <View style={styles.descSection}>
+                  <Text style={styles.sectionTitle}>Trama</Text>
+                  <Text style={styles.description} numberOfLines={isDescExpanded ? undefined : 4}>{manga.description}</Text>
+                  {manga.description.length > 100 && (
+                    <TouchableOpacity 
+                      onPress={() => setIsDescExpanded(!isDescExpanded)}
+                      style={{ marginTop: 8 }}
+                    >
+                      <Text style={{ color: '#A8B5DB', fontWeight: 'bold', fontSize: 13 }}>
+                        {isDescExpanded ? 'Show less' : 'Show more...'}
+                      </Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
+              ) : null}
             </View>
+          )}
+          <View style={[styles.chaptersHeader, selectionMode && styles.chaptersHeaderSelected]}>
+              <Text style={styles.sectionTitle}>
+                  {selectionMode ? `Selezionati: ${selectedChapters.length}` : `Chapters (${manga.chapters.length})`}
+              </Text>
 
-            {manga.description ? (
-              <View style={styles.descSection}>
-                <Text style={styles.sectionTitle}>Trama</Text>
-                <Text style={styles.description} numberOfLines={isDescExpanded ? undefined : 4}>{manga.description}</Text>
-                {manga.description.length > 100 && (
-                  <TouchableOpacity 
-                    onPress={() => setIsDescExpanded(!isDescExpanded)}
-                    style={{ marginTop: 8 }}
-                  >
-                    <Text style={{ color: '#A8B5DB', fontWeight: 'bold', fontSize: 13 }}>
-                      {isDescExpanded ? 'Show less' : 'Show more...'}
-                    </Text>
-                  </TouchableOpacity>
-                )}
-              </View>
-            ) : null}
-
-            <View style={styles.chaptersHeader}>
-              <Text style={styles.sectionTitle}>Chapters ({manga.chapters.length})</Text>
-            </View>
-          </View>
-        )}
-
-        // --- ITEM: Singolo Capitolo ---
-        renderItem={({ item }) => (
-          <TouchableOpacity 
-            style={styles.chapterItem} 
-            onPress={() => handleChapterPress(item)}
-            activeOpacity={0.7}
-          >
-            <View>
-              <Text style={styles.chapterNumber}>chapter {item.number}</Text>
-              {/* Mostra il titolo del capitolo solo se diverso da "Capitolo X" */}
-              {item.title && !item.title.toLowerCase().includes(`capitolo ${item.number}`) && (
-                 <Text style={styles.chapterTitle}>{item.title}</Text>
+              {/* Tasto Download e Elimina Icona (solo se non in selezione) */}
+              {!selectionMode && (
+                  <View style={{flexDirection: 'row', gap: 15, alignItems: 'center'}}>
+                      <TouchableOpacity onPress={activateDeleteMode}>
+                          <Image 
+                            source={icons.trashcan} 
+                            style={{ width: 24, height: 24 }} 
+                            resizeMode="contain" 
+                            tintColor="#FF6B6B"
+                          />
+                      </TouchableOpacity>
+                      <TouchableOpacity onPress={activateDownloadMode}>
+                          <Image 
+                            source={icons.download} 
+                            style={styles.downloadIcon} 
+                            resizeMode="contain" 
+                            tintColor="#A8B5DB"
+                          />
+                      </TouchableOpacity>
+                  </View>
               )}
             </View>
-            {item.date && <Text style={styles.chapterDate}>{item.date}</Text>}
-          </TouchableOpacity>
-        )}
-
-        // --- FOOTER ---
-        ListFooterComponent={() => (
-          <View style={styles.footer}>
-            {hasMoreChapters && (
-              <TouchableOpacity style={styles.loadMoreButton} onPress={showAllChapters}>
-                <Text style={styles.loadMoreText}>
-                  Show more {manga.chapters.length - limit} chapters ↓
-                </Text>
-              </TouchableOpacity>
-            )}
           </View>
         )}
+        ListEmptyComponent={() => (
+          selectionMode && actionType === 'delete' ? (
+            <View style={{ padding: 20, alignItems: 'center' }}>
+              <Text style={{ color: '#888', fontStyle: 'italic' }}>
+                No chapters to delete.
+              </Text>
+            </View>
+          ) : null
+        )}
+        // item:singolo cap
+        renderItem={({ item }) => {
+          const isSelected = selectedChapters.includes(item.id);
+          return (
+            <TouchableOpacity 
+              style={[
+                  styles.chapterItem, 
+                  selectionMode && isSelected && { backgroundColor: 'rgba(255, 255, 255, 0.08)' }
+              ]}
+              onPress={() => handleChapterPress(item)}
+              activeOpacity={0.7}
+            >
+              <View>
+                <Text style={[styles.chapterNumber, selectionMode && isSelected && {color: '#A8B5DB'}]}>chapter {item.number}</Text>
+                {/* mstra il titolo del capitolo solo se diverso da "Capitolo X" */}
+                {item.title && !item.title.toLowerCase().includes(`capitolo ${item.number}`) && (
+                  <Text style={styles.chapterTitle}>{item.title}</Text>
+                )}
+              </View>
+
+              {selectionMode ? (
+                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                      {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                  </View>
+              ) : (
+                  item.date && <Text style={styles.chapterDate}>{item.date}</Text>
+              )}
+            </TouchableOpacity>
+        )}}
+
+        // footer
+        ListFooterComponent={() => (
+          !selectionMode && hasMoreChapters ? (
+            <View style={styles.footer}>
+                <TouchableOpacity style={styles.loadMoreButton} onPress={showAllChapters}>
+                    <Text style={styles.loadMoreText}>Show more...</Text>
+                </TouchableOpacity>
+            </View>
+          ) : null
+        )}
       />
+      
+      {selectionMode && selectedChapters.length > 0 && (
+        <View style={styles.floatingContainer}>
+            {actionType === 'download' ? (
+                <TouchableOpacity style={styles.downloadFab} onPress={startDownload}>
+                    <Text style={styles.downloadFabText}>
+                        Scarica {selectedChapters.length} Capitoli
+                    </Text>
+                </TouchableOpacity>
+            ) : (
+                <TouchableOpacity 
+                    style={[styles.downloadFab, { backgroundColor: '#FF6B6B' }]} 
+                    onPress={handleDelete}
+                >
+                    <Text style={[styles.downloadFabText, { color: 'white' }]}>
+                        Elimina {selectedChapters.length} Capitoli
+                    </Text>
+                </TouchableOpacity>
+            )}
+        </View>
+      )}
     </View>
   );
-}
+};
 
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#1F243D',
-  },
-  center: {
-    flex: 1,
-    backgroundColor: '#1F243D',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  navBar: {
-    paddingTop: 50,
-    paddingHorizontal: 20,
-    paddingBottom: 10,
-    backgroundColor: '#1F243D',
-    zIndex: 10,
-  },
-  backButton: {
-    paddingVertical: 8,
-  },
-  backText: {
-    color: '#A8B5DB',
-    fontSize: 16,
-    fontWeight: '600',
-  },
-  headerContainer: {
-    paddingHorizontal: 20,
-    paddingTop: 10,
-  },
-  topSection: {
-    flexDirection: 'row',
-    marginBottom: 25,
-  },
-  coverImage: {
-    width: 130, // Larghezza fissa
-    height: 190, // Altezza fissa (ratio ~1.45)
-    borderRadius: 8,
-    backgroundColor: '#2A2F45',
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.1)'
-  },
-  titleRow:{
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom:12,
-    alignItems: 'flex-start',
-  },
-  infoSection: {
-    flex: 1,
-    marginLeft: 20,
-    justifyContent: 'flex-start', // Allinea in alto
-  },
-  saveIcon: {
-    width: 24,
-    height: 24,
-    tintColor: '#A8B5DB',
-  },
-  title: {
-    color: 'white',
-    fontSize: 20,
-    fontWeight: 'bold',
-    lineHeight: 28,
-  },
-  metaText: {
-    color: '#A8B5DB',
-    fontSize: 13,
-    marginBottom: 6,
-    lineHeight: 18,
-  },
-  label: {
-    fontWeight: 'bold',
-    color: '#fff',
-  },
-  descSection: {
-    marginBottom: 25,
-    backgroundColor: 'rgba(255,255,255,0.05)', // Sfondo leggero per la trama
-    padding: 15,
-    borderRadius: 12,
-  },
-  sectionTitle: {
-    color: 'white',
-    fontSize: 18,
-    fontWeight: 'bold',
-    marginBottom: 8,
-  },
-  description: {
-    color: '#cbd5e1',
-    fontSize: 14,
-    lineHeight: 22,
-  },
-  chaptersHeader: {
-    marginBottom: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.1)',
-    paddingBottom: 10,
-  },
-  chapterItem: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    paddingVertical: 16,
-    paddingHorizontal: 20,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(255,255,255,0.05)',
-  },
-  chapterNumber: {
-    color: 'white',
-    fontSize: 16,
-    fontWeight: '500',
-  },
-  chapterTitle: {
-    color: '#6e7a9e',
-    fontSize: 12,
-    marginTop: 2,
-  },
-  chapterDate: {
-    color: '#555',
-    fontSize: 12,
-  },
-  footer: {
-    marginTop: 20,
-    alignItems: 'center',
-    marginBottom: 40,
-  },
-  loadMoreButton: {
-    backgroundColor: 'rgba(255, 255, 255, 0.1)',
-    paddingVertical: 12,
-    paddingHorizontal: 25,
-    borderRadius: 99,
-    borderWidth: 1,
-    borderColor: 'rgba(255,255,255,0.05)',
-  },
-  loadMoreText: {
-    color: '#fff',
-    fontWeight: '600',
-    fontSize: 14,
-  }
-});

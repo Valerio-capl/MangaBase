@@ -1,5 +1,6 @@
 
 import SourceManager from '../../api/sourceManager';
+import { DownloadManager } from '../../api/downloadManager';
 import { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Dimensions } from 'react-native';
@@ -36,6 +37,7 @@ export default function ReaderScreen() {
             resolve({ ...item, height: calculatedHeight });
           },
           (error) => {
+            console.warn("Errore dimensione immagine:", error);
             resolve({ ...item, height: width * 1.4 });
           }
         );
@@ -57,8 +59,19 @@ export default function ReaderScreen() {
       }
 
       try {
-        
-        const rawData:ReaderImage[] = await SourceManager.getChapterImages(source, mangaId, slug, chapterId);
+        let rawData: ReaderImage[] = [];
+
+        if (source === 'local') {
+          rawData = await DownloadManager.getLocalChapterImages(mangaId, chapterId);
+        } else {
+          rawData = await SourceManager.getChapterImages(source, mangaId, slug, chapterId);
+        }
+
+        if (!rawData || rawData.length === 0) {
+          console.warn("Nessuna immagine trovata");
+          if (isMounted) setLoading(false);
+          return;
+        }
         const dataWithHeights = await calculateImageHeights(rawData);
         
         if (isMounted) {
@@ -78,7 +91,7 @@ export default function ReaderScreen() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#0000ff" />
-        <Text style={{ marginTop: 10, color: 'white' }}>Loading pages...</Text>
+        <Text style={{ marginTop: 10, color: 'white' }}>{source === 'local' ? 'Opening File...' : 'Loading pages...'}</Text>
       </View>
     );
   }
