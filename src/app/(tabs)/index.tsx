@@ -57,7 +57,12 @@ export default function Index() {
       const storedData = await AsyncStorage.getItem('myLibrary');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
-        setLibrary(parsedData.reverse().slice(0, 10));//ultimi 10 salvati
+        parsedData.sort((a: any, b: any) => {
+          const dateA = a.lastRead || 0;
+          const dateB = b.lastRead || 0;
+          return dateB - dateA;
+        });
+        setLibrary(parsedData.slice(0, 10));//ultimi 10 salvati
       }
     } catch (error) {
       console.error("Errore caricamento libreria:", error);

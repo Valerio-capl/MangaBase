@@ -27,7 +27,12 @@ const libraryScreen = () => {
       const storedData = await AsyncStorage.getItem('myLibrary');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
-        setLibrary(parsedData.reverse()); 
+        parsedData.sort((a: any, b: any) => {
+          const dateA = a.lastRead || 0;
+          const dateB = b.lastRead || 0;
+          return dateB - dateA;
+        });
+        setLibrary(parsedData); 
       }
     } catch (error) {
       console.error("Errore caricamento libreria:", error);

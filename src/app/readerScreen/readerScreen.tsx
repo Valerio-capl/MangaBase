@@ -4,6 +4,7 @@ import { DownloadManager } from '../../api/downloadManager';
 import { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Dimensions } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
 interface ReaderImage {
@@ -60,24 +61,46 @@ export default function ReaderScreen() {
 
       try {
         let rawData: ReaderImage[] = [];
-
         if (source === 'local') {
           rawData = await DownloadManager.getLocalChapterImages(mangaId, chapterId);
         } else {
           rawData = await SourceManager.getChapterImages(source, mangaId, slug, chapterId);
         }
-
         if (!rawData || rawData.length === 0) {
           console.warn("Nessuna immagine trovata");
           if (isMounted) setLoading(false);
           return;
         }
-        const dataWithHeights = await calculateImageHeights(rawData);
         
+        const dataWithHeights = await calculateImageHeights(rawData);
         if (isMounted) {
           setImages(dataWithHeights);
           setLoading(false);
         }
+
+        try {
+          const progressStr = await AsyncStorage.getItem('read_chapters');
+          const progress = progressStr ? JSON.parse(progressStr) : {};
+            
+          if (!progress[mangaId]) progress[mangaId] = [];
+          if (!progress[mangaId].includes(chapterId)) {
+            progress[mangaId].push(chapterId);
+            await AsyncStorage.setItem('read_chapters', JSON.stringify(progress));
+          }
+          const libraryStr = await AsyncStorage.getItem('myLibrary');
+          if (libraryStr) {
+            const library = JSON.parse(libraryStr);
+            const mangaIndex = library.findIndex((m: any) => m.id === mangaId);
+          
+            if (mangaIndex !== -1) { //-1 se non è salvato
+              library[mangaIndex].lastRead = Date.now(); 
+              await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
+            }
+          }
+        }catch (error){
+          console.error("errore caricare progresso")
+        }
+
       } catch (error) {
         console.error("Errore fetch reader:", error);
         setLoading(false);
@@ -85,7 +108,7 @@ export default function ReaderScreen() {
     }; fetchImages();
 
     return () => { isMounted = false; };
-  }, [mangaId, slug, chapterId]);
+  }, [mangaId, slug, chapterId, source]);
 
   if (loading) {
     return (
