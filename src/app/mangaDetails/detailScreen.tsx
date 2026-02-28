@@ -1,9 +1,9 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { 
   View, Text, Image, ActivityIndicator, 
   TouchableOpacity, FlatList, Alert,
 } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SourceManager from '@/src/api/sourceManager';
 import { DownloadManager } from '@/src/api/downloadManager';
@@ -40,6 +40,7 @@ export default function MangaDetails() {
   const [limit, setLimit] = useState(10); // limit for chapter load then readmore
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
+  const [readChapters, setReadChapters] = useState<string[]>([]);
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
@@ -81,9 +82,24 @@ export default function MangaDetails() {
     };
     checkStatus();
   }, [id]);
-  useEffect(() => {
+  useFocusEffect(
+    useCallback(() => {
     refreshDownloads();
-  }, [id]);
+    const loadReadProgress = async () => {
+      if (!id) return;
+      try {
+        const progressStr = await AsyncStorage.getItem('read_chapters');
+        if (progressStr) {
+          const progress = JSON.parse(progressStr);
+          if (progress[id.toString()]) {
+            setReadChapters(progress[id.toString()]);
+          }
+        }
+      } catch (e) { console.error(e); }
+    };
+    loadReadProgress();
+  }, [id])
+  );
 
   
   const toggleSelectionMode = () => {
@@ -372,11 +388,16 @@ export default function MangaDetails() {
         // item:singolo cap
         renderItem={({ item }) => {
           const isSelected = selectedChapters.includes(item.id);
+          const isRead = readChapters.includes(item.id);
           return (
             <TouchableOpacity 
               style={[
                   styles.chapterItem, 
-                  selectionMode && isSelected && { backgroundColor: 'rgba(255, 255, 255, 0.08)' }
+                  selectionMode && isSelected 
+                    ? { backgroundColor: 'rgba(255, 255, 255, 0.08)' }
+                    : isRead 
+                      ? styles.read
+                      : null
               ]}
               onPress={() => handleChapterPress(item)}
               activeOpacity={0.7}
@@ -384,7 +405,7 @@ export default function MangaDetails() {
               <View>
                 <Text style={[styles.chapterNumber, selectionMode && isSelected && {color: '#A8B5DB'}]}>chapter {item.number}</Text>
                 {/* mstra il titolo del capitolo solo se diverso da "Capitolo X" */}
-                {item.title && !item.title.toLowerCase().includes(`capitolo ${item.number}`) && (
+                {item.title && !item.title.toLowerCase().includes(`capitolo ${item.number}`) && !item.title.toLowerCase().includes(`chapter ${item.number}`) && (
                   <Text style={styles.chapterTitle}>{item.title}</Text>
                 )}
               </View>
