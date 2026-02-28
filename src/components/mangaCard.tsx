@@ -9,9 +9,10 @@ interface MangaCardProps {
     };
     onPress: () => void;
     containerStyle?: StyleProp<ViewStyle>; 
+    hideTitle?: boolean;
 }
 
-const mangaCard = ({ item, onPress, containerStyle }: MangaCardProps) => {
+const mangaCard = ({ item, onPress, containerStyle, hideTitle = false }: MangaCardProps) => {
   return (
     <TouchableOpacity 
       style={[styles.card, containerStyle]}
@@ -30,13 +31,15 @@ const mangaCard = ({ item, onPress, containerStyle }: MangaCardProps) => {
             )}
         </View>
       
-        <Text 
-            style={styles.title} 
-            numberOfLines={1} 
-            ellipsizeMode="tail"
-        >
-            {item.title}
-        </Text>
+        {!hideTitle && (
+            <Text 
+                style={styles.title} 
+                numberOfLines={1} 
+                ellipsizeMode="tail"
+            >
+                {item.title}
+            </Text>
+        )}
     </TouchableOpacity>
   )
 }
