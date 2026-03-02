@@ -1,7 +1,7 @@
 
 import SourceManager from '../../api/sourceManager';
 import { DownloadManager } from '../../api/downloadManager';
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Dimensions } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -20,6 +20,50 @@ type ReaderParams = {
   source: string;
 };
 
+const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width: number }) => {
+  const [height, setHeight] = useState<number>(0);
+  const [isCalculated, setIsCalculated] = useState<boolean>(false);
+
+  useEffect(() => {
+    let isMounted = true;
+    Image.getSize(
+      item.url,
+      (w, h) => {
+        if (isMounted) {
+          setHeight(width * (h / w));
+          setIsCalculated(true);
+        }
+      },
+      (error) => {
+        console.warn("Errore calcolo immagine:", error);
+        if (isMounted) {
+          setHeight(width * 1.4);
+          setIsCalculated(true);
+        }
+      }
+    );
+
+    return () => { isMounted = false; };
+  }, [item.url, width]);
+
+  if (!isCalculated) {
+    return (
+      <View style={{ width: width, height: width * 1.4, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
+         <ActivityIndicator color="#A8B5DB" />
+      </View>
+    );
+  }
+  return (
+    <View style={{ width, height }}>
+      <Image
+        source={{ uri: item.url, headers: item.headers }}
+        style={{ width, height }}
+        resizeMode="contain"
+      />
+    </View>
+  );
+});
+
 export default function ReaderScreen() {
   const router = useRouter();
   const { mangaId, slug, chapterId, source } = useLocalSearchParams<ReaderParams>();
@@ -28,25 +72,25 @@ export default function ReaderScreen() {
   const [images, setImages] = useState<ReaderImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
 
-  const calculateImageHeights = async (imagesData: ReaderImage[]): Promise<ReaderImage[]> => {
-    const promises = imagesData.map(async (item) => {
-      return new Promise<ReaderImage>((resolve) => {
-        Image.getSize(
-          item.url,
-          (imgWidth, imgHeight) => {
-            const calculatedHeight = width * (imgHeight / imgWidth);
-            resolve({ ...item, height: calculatedHeight });
-          },
-          (error) => {
-            console.warn("Errore dimensione immagine:", error);
-            resolve({ ...item, height: width * 1.4 });
-          }
-        );
-      });
-    });
+  // const calculateImageHeights = async (imagesData: ReaderImage[]): Promise<ReaderImage[]> => {
+  //   const promises = imagesData.map(async (item) => {
+  //     return new Promise<ReaderImage>((resolve) => {
+  //       Image.getSize(
+  //         item.url,
+  //         (imgWidth, imgHeight) => {
+  //           const calculatedHeight = width * (imgHeight / imgWidth);
+  //           resolve({ ...item, height: calculatedHeight });
+  //         },
+  //         (error) => {
+  //           console.warn("Errore dimensione immagine:", error);
+  //           resolve({ ...item, height: width * 1.4 });
+  //         }
+  //       );
+  //     });
+  //   });
 
-    return await Promise.all(promises);
-  };
+  //   return await Promise.all(promises);
+  // };
 
   useEffect(() => {
     let isMounted = true;
@@ -72,9 +116,9 @@ export default function ReaderScreen() {
           return;
         }
         
-        const dataWithHeights = await calculateImageHeights(rawData);
+        // const dataWithHeights = await calculateImageHeights(rawData);
         if (isMounted) {
-          setImages(dataWithHeights);
+          setImages(rawData);
           setLoading(false);
         }
 
@@ -133,16 +177,18 @@ export default function ReaderScreen() {
         data={images}
         keyExtractor={(item) => item.page.toString()}
         renderItem={({ item }) => (
-          <View style={[styles.imageContainer, { height: item.height }]}> 
-            <Image 
-              source={{ uri: item.url, headers:item.headers }} 
-              style={[styles.pageImage, { height: item.height }]}
-              resizeMode="contain"
-            />
-          </View>
+          <SelfSizingImage item={item} width={width} />
+          // <View style={[styles.imageContainer, { height: item.height }]}> 
+          //   <Image 
+          //     source={{ uri: item.url, headers:item.headers }} 
+          //     style={[styles.pageImage, { height: item.height }]}
+          //     resizeMode="contain"
+          //   />
+          // </View>
         )}
         initialNumToRender={2}
         windowSize={5}
+        // removeClippedSubviews={true}
       />
     </View>
   );
