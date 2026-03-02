@@ -116,21 +116,13 @@ class MangaWorld {
   async getChapterImages(mangaId, slug, chapterId) {
       try {
         const chapterUrl = `${this.baseUrl}/manga/${mangaId}/${slug}/read/${chapterId}`;
-        const images = [];
+        
 
         const firstPageUrl = `${chapterUrl}/1`;
         const html = await this._fetchHtml(firstPageUrl);
         const $ = cheerio.load(html);
         const firstImgUrl = this._extractImageFromHtml($);
-        const fixedfirstImgUrl = await this._fixUrl(firstImgUrl);
-        images.push({
-                page: 1,
-                url:  fixedfirstImgUrl,
-                headers: { 
-                  'Referer': this.baseUrl,
-                  'User-Agent': this.headers['User-Agent'] 
-              }
-              })
+        
 
         const pageSelect = $(this.config.selectors.chapter.pageSelect);
         let totalPages = 1;
@@ -141,34 +133,39 @@ class MangaWorld {
           else totalPages = pageSelect.find('option').length;
         }
 
-        let pageNum = 2;
-        for(pageNum; pageNum<=totalPages; pageNum+=1){
-          const pageUrl = `${chapterUrl}/${pageNum}`;
-          
-          const html = await this._fetchHtml(pageUrl)
-          const $ = cheerio.load(html);
-          const src = this._extractImageFromHtml($);
-          const fixedSrc = await this._fixUrl(src);
-          images.push({
-            page: pageNum,
-            url:  fixedSrc,
-            headers: { 
-                  'Referer': this.baseUrl,
-                  'User-Agent': this.headers['User-Agent'] 
-              }
-          });
+        const pageNums = Array.from({ length: totalPages - 1 }, (_, i) => i + 2);
+        const restImages = [];
+        const batchSize = 3; 
+        for (let i = 0; i < pageNums.length; i += batchSize) {
+          const batch = pageNums.slice(i, i + batchSize);
+          const batchResults = await Promise.all(
+            batch.map(async (pageNum) => {
+              try {
+                const html = await this._fetchHtml(`${chapterUrl}/${pageNum}`);
+                const $ = cheerio.load(html);
+                const src = this._extractImageFromHtml($);
+                return {
+                  page: pageNum,
+                  url: this._fixUrl(src),
+                  headers: { Referer: this.baseUrl, 'User-Agent': this.headers['User-Agent'] }
+                };
+              } catch { return null; }
+            })
+          );
+          restImages.push(...batchResults);
+        }
 
-          if (pageNum > 200) {
-            return images
+        const images = [
+          { page: 1, url: this._fixUrl(firstImgUrl), headers: { Referer: this.baseUrl, 'User-Agent': this.headers['User-Agent'] } },
+          ...restImages.filter(Boolean)
+        ];
+            return images.sort((a, b) => a.page - b.page);
+      
+          } catch (err) {
+            console.error('Errore caricamento immagini capitolo:', err);
+            return [];
           }
         }
-        return images;
-  
-      } catch (err) {
-        console.error('Errore caricamento immagini capitolo:', err);
-        return [];
-      }
-    }
 
   // --- HELPERS ---
 
