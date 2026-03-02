@@ -24,7 +24,6 @@ export default function Index() {
 
   const [loadingOngoing, setLoadingOngoing] = useState(true);
   const [loadingPopular, setLoadingPopular] = useState(true);
-  const [loadingLibrary, setLoadingLibrary] = useState(true);
 
   useEffect(() => {
     loadJikanData();
@@ -53,7 +52,7 @@ export default function Index() {
   };
   const loadLibrary = async () => {
     try {
-      setLoadingLibrary(true);
+      
       const storedData = await AsyncStorage.getItem('myLibrary');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
@@ -66,9 +65,7 @@ export default function Index() {
       }
     } catch (error) {
       console.error("Errore caricamento libreria:", error);
-    } finally {
-      setLoadingLibrary(false);
-    }
+    } 
   };
 
   const handleSearch = () => {
@@ -95,9 +92,9 @@ export default function Index() {
   const renderSection = (
     title: string, 
     data: MangaItem[], 
-    isLoading: boolean, 
     onPressItem: (item: any) => void,
-    emptyText: string = "Nessun risultato"
+    isLoading?: boolean,
+    emptyText: string = "Nessun risultato",
   ) => {
 
     if (isLoading) return <ActivityIndicator size="small" color="#fff" style={{marginVertical: 20}}/>;
@@ -143,24 +140,25 @@ export default function Index() {
           
           {renderSection(
             "Top Ongoing", 
-            topOngoing, 
+            topOngoing,
+            (item) => handleJikanMangaPress(item.title),
             loadingOngoing, 
-            (item) => handleJikanMangaPress(item.title)
           )}
           <SectionDivider />
           {renderSection(
             "Library", 
-            library, 
-            loadingLibrary, 
+            library,
             (item) => handleLibraryMangaPress(item),
+            false,
             "Non hai ancora salvato nessun manga."
+            
           )}
           <SectionDivider />
           {renderSection(
             "Top Popular All Time", 
             topPopular, 
-            loadingPopular, 
-            (item) => handleJikanMangaPress(item.title)
+            (item) => handleJikanMangaPress(item.title),
+            loadingPopular,
           )}
         </ScrollView>
       
