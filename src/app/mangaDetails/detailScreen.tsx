@@ -122,6 +122,7 @@ export default function MangaDetails() {
   };
 
   const handleChapterPress = (chapter: Chapter) => {
+    if (!manga) return;
     if(selectionMode){
       if (actionType === 'delete') {
          const isDownloaded = downloadedChapters.includes(chapter.id);
@@ -135,6 +136,7 @@ export default function MangaDetails() {
         setSelectedChapters([...selectedChapters, chapter.id]);
       }
     } else {
+      const chapterListString = manga.chapters.map(c => c.id).join(',');
       const isDownloaded = downloadedChapters.includes(chapter.id);
       router.push({
         pathname: "../readerScreen/readerScreen",
@@ -142,7 +144,8 @@ export default function MangaDetails() {
           mangaId: id, 
           slug: slug, 
           chapterId: chapter.id,
-          source: isDownloaded ? 'local' : source
+          source: isDownloaded ? 'local' : source,
+          chapterList: chapterListString
         }
       });
     }

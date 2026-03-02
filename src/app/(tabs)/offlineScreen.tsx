@@ -44,13 +44,15 @@ const OfflineScreen = () => {
     }
   };
   const handleChapterPress = (manga: LocalManga, chapter: LocalChapter) => {
+    const chapterListString = manga.chapters.map(c => c.id).join(',');
     router.push({
       pathname: "../readerScreen/readerScreen",
       params: { 
         mangaId: manga.id,
         slug: manga.title,
         chapterId: chapter.id,
-        source:'local'
+        source:'local',
+        chapterList: chapterListString
       }
     });
   };

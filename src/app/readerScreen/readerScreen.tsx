@@ -3,7 +3,7 @@ import SourceManager from '../../api/sourceManager';
 import { DownloadManager } from '../../api/downloadManager';
 import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const { width } = Dimensions.get('window');
@@ -18,6 +18,7 @@ type ReaderParams = {
   slug: string;
   chapterId: string;
   source: string;
+  chapterList?: string
 };
 
 const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width: number }) => {
@@ -66,31 +67,17 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
 
 export default function ReaderScreen() {
   const router = useRouter();
-  const { mangaId, slug, chapterId, source } = useLocalSearchParams<ReaderParams>();
+  const { mangaId, slug, chapterId, source, chapterList } = useLocalSearchParams<ReaderParams>();
   console.log(`caricando ${slug} ${chapterId} da ${source}`)
+  
+  const chaptersArray = chapterList ? chapterList.split(',') : [];
+  const currentIndex = chaptersArray.indexOf(chapterId as string);
+  const nextChapterId = currentIndex > 0 ? chaptersArray[currentIndex - 1] : null;
+  const prevChapterId = currentIndex < chaptersArray.length - 1 ? chaptersArray[currentIndex + 1] : null;
 
   const [images, setImages] = useState<ReaderImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
-
-  // const calculateImageHeights = async (imagesData: ReaderImage[]): Promise<ReaderImage[]> => {
-  //   const promises = imagesData.map(async (item) => {
-  //     return new Promise<ReaderImage>((resolve) => {
-  //       Image.getSize(
-  //         item.url,
-  //         (imgWidth, imgHeight) => {
-  //           const calculatedHeight = width * (imgHeight / imgWidth);
-  //           resolve({ ...item, height: calculatedHeight });
-  //         },
-  //         (error) => {
-  //           console.warn("Errore dimensione immagine:", error);
-  //           resolve({ ...item, height: width * 1.4 });
-  //         }
-  //       );
-  //     });
-  //   });
-
-  //   return await Promise.all(promises);
-  // };
+  const [hasMarkedRead, setHasMarkedRead] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -121,30 +108,6 @@ export default function ReaderScreen() {
           setImages(rawData);
           setLoading(false);
         }
-
-        try {
-          const progressStr = await AsyncStorage.getItem('read_chapters');
-          const progress = progressStr ? JSON.parse(progressStr) : {};
-            
-          if (!progress[mangaId]) progress[mangaId] = [];
-          if (!progress[mangaId].includes(chapterId)) {
-            progress[mangaId].push(chapterId);
-            await AsyncStorage.setItem('read_chapters', JSON.stringify(progress));
-          }
-          const libraryStr = await AsyncStorage.getItem('myLibrary');
-          if (libraryStr) {
-            const library = JSON.parse(libraryStr);
-            const mangaIndex = library.findIndex((m: any) => m.id === mangaId);
-          
-            if (mangaIndex !== -1) { //-1 se non è salvato
-              library[mangaIndex].lastRead = Date.now(); 
-              await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
-            }
-          }
-        }catch (error){
-          console.error("errore caricare progresso")
-        }
-
       } catch (error) {
         console.error("Errore fetch reader:", error);
         setLoading(false);
@@ -153,6 +116,59 @@ export default function ReaderScreen() {
 
     return () => { isMounted = false; };
   }, [mangaId, slug, chapterId, source]);
+
+  const markAsRead = async () => {
+    if (hasMarkedRead) return;
+    setHasMarkedRead(true);
+
+    try {
+      const progressStr = await AsyncStorage.getItem('read_chapters');
+      const progress = progressStr ? JSON.parse(progressStr) : {};         
+      if (!progress[mangaId]) progress[mangaId] = [];
+      if (!progress[mangaId].includes(chapterId)) {
+        progress[mangaId].push(chapterId);
+        await AsyncStorage.setItem('read_chapters', JSON.stringify(progress));
+      }
+      const libraryStr = await AsyncStorage.getItem('myLibrary');
+      if (libraryStr) {
+        const library = JSON.parse(libraryStr);
+        const mangaIndex = library.findIndex((m: any) => m.id === mangaId);
+        if (mangaIndex !== -1) { //-1 se non è salvato
+          library[mangaIndex].lastRead = Date.now(); 
+          await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
+         }
+      }
+    }catch (error){
+      console.error("errore caricare progresso", error)
+    }
+  }
+
+
+  const Footer = () => (
+    <View style={styles.footerContainer}>
+      <TouchableOpacity
+        style={[styles.navButton, !prevChapterId && styles.navButtonDisabled]}
+        disabled={!prevChapterId}
+        onPress={() => router.replace({
+          pathname: "../readerScreen/readerScreen",
+          params: { mangaId, slug, source, chapterId: prevChapterId, chapterList }
+        })}
+      >
+        <Text style={[styles.navButtonText, { fontWeight: 'bold' }]}>{"<-"}</Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={[styles.navButton, !nextChapterId && styles.navButtonDisabled]}
+        disabled={!nextChapterId}
+        onPress={() => router.replace({
+          pathname: "../readerScreen/readerScreen",
+          params: { mangaId, slug, source, chapterId: nextChapterId, chapterList }
+        })}
+      >
+        <Text style={[styles.navButtonText, { fontWeight: 'bold' }]}>{"->"}</Text>
+      </TouchableOpacity>
+    </View>
+  );
 
   if (loading) {
     return (
@@ -178,17 +194,13 @@ export default function ReaderScreen() {
         keyExtractor={(item) => item.page.toString()}
         renderItem={({ item }) => (
           <SelfSizingImage item={item} width={width} />
-          // <View style={[styles.imageContainer, { height: item.height }]}> 
-          //   <Image 
-          //     source={{ uri: item.url, headers:item.headers }} 
-          //     style={[styles.pageImage, { height: item.height }]}
-          //     resizeMode="contain"
-          //   />
-          // </View>
         )}
         initialNumToRender={2}
         windowSize={5}
         // removeClippedSubviews={true}
+        ListFooterComponent={Footer}
+        onEndReached={markAsRead}
+        onEndReachedThreshold={0.5}
       />
     </View>
   );
@@ -213,5 +225,32 @@ const styles = StyleSheet.create({
   },
   pageImage: {
     width: width,
+  },
+  footerContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    padding: 15,
+    paddingHorizontal: 50,
+    paddingBottom: 60, // Spazio extra per i dispositivi senza tasto home (iPhone)
+    backgroundColor: '#000'
+  },
+  navButton: {
+    flex: 1,
+    padding: 6,
+    backgroundColor: '#232c55',
+    borderRadius: 10,
+    alignItems: 'center',
+    alignContent: 'space-around',
+    marginHorizontal: 25,
+  },
+  nextButton: {
+    backgroundColor: '#232c55', // Colore primario per risaltare
+  },
+  navButtonDisabled: {
+    opacity: 0.3,
+  },
+  navButtonText: {
+    color: '#fff',
+    fontSize: 14,
   },
 });
