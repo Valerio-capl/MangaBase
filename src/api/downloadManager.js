@@ -40,7 +40,7 @@ export const DownloadManager = {
         downloadsDB.push(localManga);
       }
       for (const chapter of chapters){
-        if (onProgress) onProgress(`downloading ${chapter.title}...`);
+        if (onProgress) onProgress(`Downloading ${chapter.title}...`);
 
         try {
           const images = await SourceManager.getChapterImages(
