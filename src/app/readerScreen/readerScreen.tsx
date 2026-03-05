@@ -3,8 +3,11 @@ import SourceManager from '../../api/sourceManager';
 import { DownloadManager } from '../../api/downloadManager';
 import React, { useState, useEffect } from 'react';
 import { useLocalSearchParams, useRouter } from 'expo-router';
+import AntDesign from '@expo/vector-icons/AntDesign';
 import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import ErrorView from '@/src/errors/ErrorView';
+import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
 
 const { width } = Dimensions.get('window');
 interface ReaderImage {
@@ -78,11 +81,14 @@ export default function ReaderScreen() {
   const [images, setImages] = useState<ReaderImage[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [hasMarkedRead, setHasMarkedRead] = useState(false);
+  const [error, setError] = useState<ErrorInfo | null>(null);
+  const [retryTrigger, setRetryTrigger] = useState(0);
 
   useEffect(() => {
     let isMounted = true;
 
     const fetchImages = async () => {
+      setError(null);
       setLoading(true);
       if (!mangaId || !slug || !chapterId) {
         console.error("Parametri mancanti nel ReaderScreen");
@@ -99,23 +105,25 @@ export default function ReaderScreen() {
         }
         if (!rawData || rawData.length === 0) {
           console.warn("Nessuna immagine trovata");
-          if (isMounted) setLoading(false);
+          if (isMounted) {
+            setError({ message: "Nessuna immagine trovata. Il capitolo potrebbe essere vuoto o non supportato.", action: 'home' });
+            setLoading(false)};
           return;
         }
         
-        // const dataWithHeights = await calculateImageHeights(rawData);
         if (isMounted) {
           setImages(rawData);
           setLoading(false);
         }
-      } catch (error) {
-        console.error("Errore fetch reader:", error);
+      } catch (err) {
+        console.error("Errore fetch reader:", err);
+        setError(getErrorMessage(err));
         setLoading(false);
       }
     }; fetchImages();
 
     return () => { isMounted = false; };
-  }, [mangaId, slug, chapterId, source]);
+  }, [mangaId, slug, chapterId, source, retryTrigger]);
 
   const markAsRead = async () => {
     if (hasMarkedRead) return;
@@ -154,7 +162,7 @@ export default function ReaderScreen() {
           params: { mangaId, slug, source, chapterId: prevChapterId, chapterList }
         })}
       >
-        <Text style={[styles.navButtonText, { fontWeight: 'bold' }]}>{"<-"}</Text>
+        <AntDesign name="arrow-left" size={22} color="white" />
       </TouchableOpacity>
 
       <TouchableOpacity 
@@ -165,7 +173,7 @@ export default function ReaderScreen() {
           params: { mangaId, slug, source, chapterId: nextChapterId, chapterList }
         })}
       >
-        <Text style={[styles.navButtonText, { fontWeight: 'bold' }]}>{"->"}</Text>
+        <AntDesign name="arrow-right" size={22} color="white" />
       </TouchableOpacity>
     </View>
   );
@@ -176,6 +184,15 @@ export default function ReaderScreen() {
         <ActivityIndicator size="large" color="#0000ff" />
         <Text style={{ marginTop: 10, color: 'white' }}>{source === 'local' ? 'Opening File...' : 'Loading pages...'}</Text>
       </View>
+    );
+  }
+  if (error) {
+    return (
+      <ErrorView 
+        message={error.message} 
+        action={error.action} 
+        onRetry={() => setRetryTrigger(prev => prev + 1)} 
+      />
     );
   }
 
@@ -228,9 +245,9 @@ const styles = StyleSheet.create({
   },
   footerContainer: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    justifyContent: 'center',
     padding: 15,
-    paddingHorizontal: 50,
+    paddingHorizontal: 70,
     paddingBottom: 60, // Spazio extra per i dispositivi senza tasto home (iPhone)
     backgroundColor: '#000'
   },
@@ -238,10 +255,10 @@ const styles = StyleSheet.create({
     flex: 1,
     padding: 6,
     backgroundColor: '#232c55',
-    borderRadius: 10,
+    borderRadius: 12,
     alignItems: 'center',
     alignContent: 'space-around',
-    marginHorizontal: 25,
+    marginHorizontal: 10,
   },
   nextButton: {
     backgroundColor: '#232c55', // Colore primario per risaltare

@@ -1,13 +1,13 @@
 
 import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator, Image, TouchableOpacity, Dimensions } from 'react-native';
+import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import SearchBar from "@/src/components/searchBar";
 import MangaCard from '@/src/components/mangaCard';
 import SourceManager from '@/src/api/sourceManager';
+import ErrorView from '@/src/errors/ErrorView';
+import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
 
-const { width } = Dimensions.get('window');
-const cardWidth = (width - 30) / 2;
 
 interface SourceSection {
   sourceName: string;
@@ -28,6 +28,7 @@ const searchScreen = () => {
   const [query, setQuery] = useState<string>(initialQuery);
   const [sections, setSections] = useState<SourceSection[]>([]);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<ErrorInfo | null>(null);
 
   const performSearch = async (textToSearch:string) => {
     if (!textToSearch || textToSearch.trim() === '') return;
@@ -44,9 +45,11 @@ const searchScreen = () => {
           data: newBatch
         };
         setSections((prev)=>[...prev, newSection]);
+        
       });
-    } catch (error) {
-      console.error(error);
+    } catch (err) {
+      console.error(err);
+      setError(getErrorMessage(err));
     } finally {
       setLoading(false);
     }
@@ -81,6 +84,12 @@ const searchScreen = () => {
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#0000ff"/>
       </View>
+      ) : error && sections.length === 0 ? (
+        <ErrorView 
+          message={error.message} 
+          action={error.action} 
+          onRetry={() => performSearch(query)} 
+        />
       ) : (
         <FlatList
           data={sections}
@@ -106,7 +115,7 @@ const searchScreen = () => {
             </View>
           )}
           ListEmptyComponent={
-            <Text style={styles.emptyText}>No results found.</Text>
+            !loading && !error ? <Text style={styles.emptyText}>No results found.</Text> : null
           }
           ListFooterComponent={
             loading ? <ActivityIndicator size="small" color="#0000ff" style={{marginTop: 10}}/> : null

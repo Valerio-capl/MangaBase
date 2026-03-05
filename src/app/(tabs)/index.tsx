@@ -1,11 +1,14 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Text, View, StyleSheet, Image, ScrollView, FlatList, ActivityIndicator } from "react-native";
+import { Text, View, StyleSheet, Image, ScrollView, FlatList, ActivityIndicator, TouchableOpacity } from "react-native";
 import {images} from "@/constants/images";
 import SearchBar from "@/src/components/searchBar";
 import { useFocusEffect, useRouter } from "expo-router";
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import MangaCard from "@/src/components/mangaCard";
 import { getTopOngoingManga, getTopPopularManga } from "@/src/api/jikan";
+import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
+import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+
 
 interface MangaItem {
   id: string;
@@ -24,6 +27,7 @@ export default function Index() {
 
   const [loadingOngoing, setLoadingOngoing] = useState(true);
   const [loadingPopular, setLoadingPopular] = useState(true);
+  const [jikanError, setJikanError] = useState<ErrorInfo | null>(null);
 
   useEffect(() => {
     loadJikanData();
@@ -36,20 +40,24 @@ export default function Index() {
 
   const loadJikanData = async () => {
     try {
+      setJikanError(null);
+      setLoadingPopular(true);
       setLoadingOngoing(true);
+
       const ongoingData = await getTopOngoingManga(10);
       setTopOngoing(ongoingData);
-      setLoadingOngoing(false);
-      
-      setLoadingPopular(true);
       const popularData = await getTopPopularManga(10);
       setTopPopular(popularData);
-      setLoadingPopular(false);
 
     } catch (error) {
       console.error("Errore caricamento dati Jikan:", error);
+      setJikanError(getErrorMessage(error));
+    } finally {
+      setLoadingOngoing(false);
+      setLoadingPopular(false);
     }
   };
+
   const loadLibrary = async () => {
     try {
       
@@ -95,6 +103,8 @@ export default function Index() {
     onPressItem: (item: any) => void,
     isLoading?: boolean,
     emptyText: string = "Nessun risultato",
+    error?: ErrorInfo | null,
+    onRetry?: () => void
   ) => {
 
     if (isLoading) return <ActivityIndicator size="small" color="#fff" style={{marginVertical: 20}}/>;
@@ -102,7 +112,17 @@ export default function Index() {
     return (
       <View style={style.sectionContainer}>
         <Text style={style.sectionTitle}>{title}</Text>
-        {data.length === 0 ? (
+        {error ? (
+          <View style={style.errorBox}>
+            <MaterialIcons name="error-outline" size={20} color="grey" />
+            <Text style={style.errorText}>{error.message}</Text>
+            {error.action === 'retry' && onRetry && (
+               <TouchableOpacity style={style.retryBtn} onPress={onRetry} activeOpacity={0.7}>
+                 <Text style={style.retryText}>try again</Text>
+               </TouchableOpacity>
+            )}
+          </View>
+        ) : data.length === 0 ? (
           <Text style={style.emptyText}>{emptyText}</Text>
         ) : (
           <FlatList
@@ -142,7 +162,10 @@ export default function Index() {
             "Top Ongoing", 
             topOngoing,
             (item) => handleJikanMangaPress(item.title),
-            loadingOngoing, 
+            loadingOngoing,
+            "Nessun risultato",
+            jikanError,
+            loadJikanData
           )}
           <SectionDivider />
           {renderSection(
@@ -159,6 +182,9 @@ export default function Index() {
             topPopular, 
             (item) => handleJikanMangaPress(item.title),
             loadingPopular,
+            "Nessun risultato",
+            jikanError,
+            loadJikanData
           )}
         </ScrollView>
       
@@ -202,5 +228,34 @@ const style = StyleSheet.create({
     marginVertical: 15,
     marginHorizontal: 20,
     borderRadius: 1
+  },
+  errorBox: {
+    padding: 15,
+    backgroundColor: 'rgba(255, 107, 107, 0.05)', 
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.2)',
+    alignItems: 'center',
+    marginHorizontal: 20,
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 13,
+    textAlign: 'center',
+    marginBottom: 10,
+    lineHeight: 18,
+  },
+  retryBtn: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    paddingVertical: 8,
+    paddingHorizontal: 20,
+    borderRadius: 6,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.1)',
+  },
+  retryText: {
+    color: '#A8B5DB',
+    fontWeight: 'bold',
+    fontSize: 12,
   }
 })
