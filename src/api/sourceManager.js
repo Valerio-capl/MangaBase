@@ -19,23 +19,23 @@ class SourceManager {
   async searchAll(query, onResult) {
     const promises = this.activeSources.map(async (sourceName) => {
       const source = this.sources[sourceName];
-      if (!source) return;
+      if (!source) return Promise.reject(new Error("Source not found"));
 
-      try {
-        const results = await source.searchManga(query);
-        const taggedResults = results.map(item => ({
-          ...item,
-          source: sourceName 
-        }));
+      const results = await source.searchManga(query);
+      const taggedResults = results.map(item => ({
+        ...item,
+        source: sourceName 
+      }));
 
-        if (onResult && taggedResults.length > 0) {
-          onResult(taggedResults);
-        }
-      } catch (error) {
-        console.error(`[SourceManager] Error searching on ${sourceName}:`, error);
+      if (onResult && taggedResults.length > 0) {
+        onResult(taggedResults);
       }
     });
-    await Promise.allSettled(promises);
+    const settledPromises =await Promise.allSettled(promises);
+    const allFailed = settledPromises.every(p => p.status === 'rejected');
+    if (allFailed && settledPromises.length > 0) {
+      throw settledPromises[0].reason; 
+    }
   }
 
   async getMangaDetails(sourceName, mangaId, slug) {

@@ -50,7 +50,7 @@ class MangaKatana {
         return results;
         }catch(e){
             console.warn(`[MangaKatana] Search error: ${e.message}`);
-            return [];
+            throw e;
         }
     }
     async getMangaDetails(mangaId,slug){
@@ -189,7 +189,7 @@ class MangaKatana {
 
         }catch(e){
             console.error('Errore caricamento immagini MK:', e);
-            return [];
+            throw err;
         }
 
     }

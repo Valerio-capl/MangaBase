@@ -1,3 +1,4 @@
+import { NetworkError, HTTPError } from '../errors/SourceErrors.js';
 const BASE_URL = 'https://api.jikan.moe/v4';
 
 const normalizeJikanData = (data) => {
@@ -9,7 +10,7 @@ const normalizeJikanData = (data) => {
 };
 
 const cache = new Map();
-const CACHE_DURATION = 2 * 60 * 60 * 1000; // 2 ore
+const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 ore
 
 let lastRequestTime = 0;
 const MIN_DELAY = 400; 
@@ -62,7 +63,14 @@ const fetchFromJikan = async (endpoint) => {
       return staleCache.data;
     }
     
-    return [];
+    if (error.message === "Rate Limit") {
+       throw new HTTPError(429, "Rate Limit Jikan");
+    }
+    if (error.message.includes("HTTP Error")) {
+       const status = parseInt(error.message.split(":")[1].trim()) || 500;
+       throw new HTTPError(status, "Errore Server Jikan");
+    }
+    throw new NetworkError("Nessuna connessione per raggiungere Jikan");
   }
 };
 

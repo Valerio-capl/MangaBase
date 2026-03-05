@@ -52,8 +52,8 @@ class MangaWorld {
       });
       
       return results;
-    } catch (error) {
-      return [];
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -108,8 +108,8 @@ class MangaWorld {
         chapters: chapters,
       };
       
-    } catch (error) {
-      throw error;
+    } catch (err) {
+      throw err;
     }
   }
 
@@ -163,7 +163,7 @@ class MangaWorld {
       
           } catch (err) {
             console.error('Errore caricamento immagini capitolo:', err);
-            return [];
+            throw err;
           }
         }
 
