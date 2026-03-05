@@ -218,7 +218,52 @@ const styles = StyleSheet.create({
     borderLeftWidth: 3,
     borderLeftColor: '#A8B5DB',
     paddingLeft: 12,
-  }
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0, 0, 0, 0.75)', // Oscura lo sfondo in modo elegante
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  downloadModal: {
+    width: '85%',
+    backgroundColor: '#1e2336', // Colore un po' più chiaro dello sfondo per staccare
+    borderRadius: 16,
+    padding: 25,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: 'rgba(168, 181, 219, 0.2)', // Bordo azzurrino tenue
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 10 },
+    shadowOpacity: 0.5,
+    shadowRadius: 15,
+    elevation: 10,
+  },
+  downloadModalTitle: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 10,
+  },
+  downloadModalStatus: {
+    color: '#A8B5DB',
+    fontSize: 14,
+    marginBottom: 20,
+    textAlign: 'center',
+  },
+  warningBox: {
+    backgroundColor: 'rgba(255, 107, 107, 0.1)',
+    padding: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: 'rgba(255, 107, 107, 0.3)',
+  },
+  downloadModalWarning: {
+    color: '#FF6B6B',
+    fontSize: 12,
+    textAlign: 'center',
+    lineHeight: 18,
+  },
 });
 
 export default styles;

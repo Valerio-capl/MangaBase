@@ -1,11 +1,13 @@
 import React, { useCallback, useEffect, useState } from 'react';
 import { 
   View, Text, Image, ActivityIndicator, 
-  TouchableOpacity, FlatList, Alert,
+  TouchableOpacity, FlatList, Alert, Modal
 } from 'react-native';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SourceManager from '@/src/api/sourceManager';
+import ErrorView from '@/src/errors/ErrorView';
+import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
 import { DownloadManager } from '@/src/api/downloadManager';
 import { icons } from '@/constants/icons';
 import styles from "./styleScreen"
@@ -41,6 +43,7 @@ export default function MangaDetails() {
   const [isDescExpanded, setIsDescExpanded] = useState(false);
   const [isSaved, setIsSaved] = useState(false);
   const [readChapters, setReadChapters] = useState<string[]>([]);
+  const [error, setError] = useState<ErrorInfo | null>(null);
 
   const [selectionMode, setSelectionMode] = useState(false);
   const [selectedChapters, setSelectedChapters] = useState<string[]>([]);
@@ -49,20 +52,24 @@ export default function MangaDetails() {
   const [downloadedChapters, setDownloadedChapters] = useState<string[]>([]);
   const [actionType, setActionType] = useState<'download' | 'delete'>('download'); 
 
-  useEffect(() => {
-    const fetchDetails = async () => {
+  const fetchDetails = async () => {
       if (!id || !slug) return;
       setLoading(true);
+      setError(null);
       try {
         
         const data = await SourceManager.getMangaDetails(source.toString() ,id.toString(), slug.toString());
         setManga(data);
-      } catch (error) {
-        console.error("Errore dettagli:", error);
+      } catch (err) {
+        console.error("Errore dettagli:", err);
+        setError(getErrorMessage(err));
       } finally {
         setLoading(false);
       }
-    }; fetchDetails();
+    };
+
+  useEffect(() => {
+     fetchDetails();
   }, [id, slug]);
 
   useEffect(() => {
@@ -76,8 +83,9 @@ export default function MangaDetails() {
           const exists = library.some((item: any) => item.id === id);
           setIsSaved(exists);
         }
-      } catch (error) {
-        console.error(error);
+      } catch (err) {
+        console.error(err);
+        setError(getErrorMessage(err));
       }
     };
     checkStatus();
@@ -168,8 +176,8 @@ export default function MangaDetails() {
              
              setSelectionMode(false);
              setSelectedChapters([]);
-             setDownloadStatus("Capitoli eliminati");
-             setTimeout(() => setDownloadStatus(""), 2000);
+             setDownloadStatus("Deleting Chapters");
+             setTimeout(() => setDownloadStatus(""), 1000);
           }
         }
       ]
@@ -207,7 +215,7 @@ export default function MangaDetails() {
     const chaptersToDownload = manga.chapters.filter(ch => selectedChapters.includes(ch.id));
     setIsDownloading(true);
     setSelectionMode(false);
-    setDownloadStatus("downloading...");
+    setDownloadStatus("Downloading...");
     const mangaForDownload = {
         ...manga,
         source: source
@@ -217,7 +225,7 @@ export default function MangaDetails() {
         setDownloadStatus(msg);
     }).then(async () => {
         setIsDownloading(false);
-        setDownloadStatus("Download completed!");
+        setDownloadStatus("Download Completed!");
         setSelectedChapters([]);
         await refreshDownloads();
         setTimeout(() => setDownloadStatus(""), 3000);
@@ -243,6 +251,10 @@ export default function MangaDetails() {
         <Text style={{color: '#A8B5DB', marginTop: 10}}>Loading Details...</Text>
       </View>
     );
+  }
+
+  if (error) {
+    return <ErrorView message={error.message} action={error.action} onRetry={fetchDetails} />;
   }
 
   if (!manga) {
@@ -287,11 +299,21 @@ export default function MangaDetails() {
             </Text>
         )}
       </View>
-      {(isDownloading || downloadStatus !== "") && (
-          <View style={styles.statusBanner}>
-              <Text style={{color: '#fff', fontSize: 12}}>{downloadStatus}</Text>
+      <Modal
+        transparent={true}
+        visible={isDownloading || downloadStatus !== ""}
+        animationType="fade"
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.downloadModal}>
+            <ActivityIndicator size="large" color="#A8B5DB" style={{ marginBottom: 15 }} />
+            <Text style={styles.downloadModalTitle}>{downloadStatus}</Text>
+            <View style={styles.warningBox}>
+              <Text style={styles.downloadModalWarning}>Attenzione: non chiudere questa schermata e non tornare indietro per evitare di interrompere il download!</Text>
+            </View>
           </View>
-      )}
+        </View>
+      </Modal>
     
       <FlatList
         data={displayedChapters}
