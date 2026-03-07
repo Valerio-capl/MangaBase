@@ -49,12 +49,13 @@ export default mangaCard
 const styles = StyleSheet.create({
     card: {
         width: 140,
-        height: 200,
+        // height: 200,
         marginBottom: 20,
         alignItems: 'center',
     },
     imageContainer: {
         width: '100%',
+        aspectRatio: 0.65,
         borderRadius: 6,
         overflow: 'hidden',
         backgroundColor: '#2A2F45',
