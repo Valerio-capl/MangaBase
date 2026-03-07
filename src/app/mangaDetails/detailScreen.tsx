@@ -309,7 +309,7 @@ export default function MangaDetails() {
             <ActivityIndicator size="large" color="#A8B5DB" style={{ marginBottom: 15 }} />
             <Text style={styles.downloadModalTitle}>{downloadStatus}</Text>
             <View style={styles.warningBox}>
-              <Text style={styles.downloadModalWarning}>Attenzione: non chiudere questa schermata e non tornare indietro per evitare di interrompere il download!</Text>
+              <Text style={styles.downloadModalWarning}>Warning: Do not close this screen or go back, as this may interrupt the download!</Text>
             </View>
           </View>
         </View>
