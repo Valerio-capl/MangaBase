@@ -19,9 +19,11 @@ export default function SearchBar({placeholder, value, onChangeText, onSubmit}:P
         placeholderTextColor='#a8b5db'
         value={value}
         onChangeText={onChangeText}
-        onSubmitEditing={onSubmit}   // Lancia la ricerca quando premi "Invio" sulla tastiera
+        onSubmitEditing={onSubmit}
         returnKeyType="search"
-        style={{flex:1, marginLeft:8, color:'#A8B5DB', height:15}}
+        style={style.input}
+        multiline={false}
+        scrollEnabled={false}
       />
 
     </View>
@@ -29,14 +31,21 @@ export default function SearchBar({placeholder, value, onChangeText, onSubmit}:P
 }
 const style = StyleSheet.create({
   container:{
-    height: 20,
+    height: 30,
     flexDirection:'row',
     borderRadius: 90,
     alignItems: 'center',
-    paddingHorizontal: 20, 
-    paddingVertical: 16,
+    paddingHorizontal: 20,
     backgroundColor: '#1F243D',
     borderWidth: 1,
     borderColor: 'rgba(255, 255, 255, 0.1)',
+  },
+  input:{flex:1, 
+    marginLeft:8, 
+    color:'#A8B5DB', 
+    paddingVertical: 0,
+    includeFontPadding: false,
+    textAlignVertical: 'center',
+    fontSize:15
   }
 })
