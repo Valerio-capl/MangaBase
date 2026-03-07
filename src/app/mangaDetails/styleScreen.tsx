@@ -36,8 +36,8 @@ const styles = StyleSheet.create({
     marginBottom: 25,
   },
   coverImage: {
-    width: 130, // Larghezza fissa
-    height: 190, // Altezza fissa (ratio ~1.45)
+    width: 130,
+    height: 190,
     borderRadius: 8,
     backgroundColor: '#2A2F45',
     borderWidth: 1,
@@ -77,7 +77,7 @@ const styles = StyleSheet.create({
   },
   descSection: {
     marginBottom: 25,
-    backgroundColor: 'rgba(255,255,255,0.05)', // Sfondo leggero per la trama
+    backgroundColor: 'rgba(255,255,255,0.05)',
     padding: 15,
     borderRadius: 12,
   },
@@ -221,18 +221,18 @@ const styles = StyleSheet.create({
   },
   modalOverlay: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.75)', // Oscura lo sfondo in modo elegante
+    backgroundColor: 'rgba(0, 0, 0, 0.75)',
     justifyContent: 'center',
     alignItems: 'center',
   },
   downloadModal: {
     width: '85%',
-    backgroundColor: '#1e2336', // Colore un po' più chiaro dello sfondo per staccare
+    backgroundColor: '#1e2336',
     borderRadius: 16,
     padding: 25,
     alignItems: 'center',
     borderWidth: 1,
-    borderColor: 'rgba(168, 181, 219, 0.2)', // Bordo azzurrino tenue
+    borderColor: 'rgba(168, 181, 219, 0.2)',
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 10 },
     shadowOpacity: 0.5,
