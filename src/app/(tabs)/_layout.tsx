@@ -2,10 +2,13 @@ import { View, Text, ImageBackground, Image, StyleSheet, TouchableOpacity} from 
 import React from 'react'
 import { Tabs } from 'expo-router'
 import {icons} from '@/constants/icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
+  const insets = useSafeAreaInsets();
+  const dynamicBottom = Math.max(insets.bottom, 30);
   return (
-    <View style={styles.tabBarContainer}>
+    <View style={[styles.tabBarContainer, { bottom: dynamicBottom }]}>
       {state.routes.map((route: any, index: number) => {
         const isFocused = state.index === index;
 
@@ -69,7 +72,7 @@ export default _layout
 const styles = StyleSheet.create({
   tabBarContainer: {
     position: 'absolute',
-    bottom: 30,
+    // bottom: 30,
     left: 15,
     right: 15,
     backgroundColor: '#0B0E23',
