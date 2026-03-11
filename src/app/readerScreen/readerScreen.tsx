@@ -212,8 +212,9 @@ export default function ReaderScreen() {
         renderItem={({ item }) => (
           <SelfSizingImage item={item} width={width} />
         )}
-        initialNumToRender={2}
-        windowSize={5}
+        initialNumToRender={5}
+        maxToRenderPerBatch={12}
+        windowSize={9}
         // removeClippedSubviews={true}
         ListFooterComponent={Footer}
         onEndReached={markAsRead}
