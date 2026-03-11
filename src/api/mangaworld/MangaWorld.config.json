@@ -4,17 +4,16 @@
   "lang": "it",
   "selectors": {
     "search": {
-      "resultCard": ".entry, .anime-card, .col-6",
+      "resultCard": ".entry",
       "title": ".name, h3, .title",
       "url": "a",
       "cover": "img"
     },
     "manga": {
-      "title": "h1.name, .comic-title h1",
-      "cover": ".comic-info img, .manga-cover img",
-      "description": ".description p, .synopsis p",
-      "chapter": ".chapter, .chapter-item, .row-content-chapter",
-      "chapterDate": ".date, .text-muted"
+      "title": "h1.name",
+      "cover": ".comic-info img",
+      "chapter": ".chapter",
+      "chapterDate": ".text-muted"
     },
     "chapter": {
       "pageSelect": "select.page, select#page-select, .page-link select",
