@@ -1,0 +1,28 @@
+{
+  "name": "NoveCool-IT",
+  "baseUrl": "https://it.novelcool.com",
+  "lang": "it",
+  "selectors": {
+    "search": {
+      "resultCard": ".category-book-list .book-item",
+      "title": ".book-info .book-name",
+      "url": "a",
+      "cover": "img[itemprop='image']"
+    },
+    "manga": {
+      "title": "h1.bookinfo-title",
+      "cover": ".bookinfo-pic-img",
+      "description": ".bk-summary-txt",
+      "author": ".bookinfo-author a.hover-underline",
+      "status": ".bk-status-item a",
+      "chapterRow": ".chapter-item-list .chp-item",
+      "chapterLink": "a",
+      "chapterTitle": ".chapter-item-headtitle",
+      "chapterDate": ".chapter-item-time"
+    },
+    "chapter": {
+      "pageSelect": "section.mangaread-top select.sl-page",
+      "image": "#manga_picid_1"
+    }
+  }
+}

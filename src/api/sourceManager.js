@@ -1,15 +1,17 @@
 import MangaWorld from './mangaworld/mangaworld';
 import MangaKatana from './mangakatana/mangakatana';
+import NoveCoolIT from './novecool/novecool-it';
 
 class SourceManager {
   constructor() {
 // registro fonti
     this.sources = {
       [MangaWorld.name]: MangaWorld,
+      [NoveCoolIT.name]: NoveCoolIT,
       [MangaKatana.name]: MangaKatana,
     };
 // da modificare con impostazioni
-    this.activeSources = [MangaWorld.name, MangaKatana.name];
+    this.activeSources = [MangaWorld.name, NoveCoolIT.name, MangaKatana.name];
   }
 
   /**
