@@ -1,0 +1,28 @@
+{
+  "name": "MangaRead",
+  "baseUrl": "https://www.mangaread.org",
+  "lang": "en",
+  "selectors": {
+    "search": {
+      "resultCard": ".row.c-tabs-item__content",
+      "title": ".post-title h3 a",
+      "url": ".post-title h3 a",
+      "cover": ".tab-thumb img"
+    },
+    "manga": {
+      "title": ".post-title h1",
+      "cover": ".summary_image a img",
+      "description": ".summary__content.show-more p",
+      "author": ".author-content a",
+      "detailsContainer": ".post-status .post-content_item",
+      "detailsLabel": ".summary-heading h5",
+      "detailsValue": ".summary-content",
+      "chapterRow": ".listing-chapters_wrap ul li",
+      "chapterLink": "a",
+      "chapterDate": "span i"
+    },
+    "chapter": {
+      "image": ".reading-content .page-break img"
+    }
+  }
+}

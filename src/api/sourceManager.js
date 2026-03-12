@@ -1,6 +1,7 @@
 import MangaWorld from './mangaworld/mangaworld';
 import MangaKatana from './mangakatana/mangakatana';
 import NoveCoolIT from './novecool/novecool-it';
+import MangaRead from './mangaread/mangaread';
 
 class SourceManager {
   constructor() {
@@ -9,9 +10,10 @@ class SourceManager {
       [MangaWorld.name]: MangaWorld,
       [NoveCoolIT.name]: NoveCoolIT,
       [MangaKatana.name]: MangaKatana,
+      [MangaRead.name]: MangaRead,
     };
 // da modificare con impostazioni
-    this.activeSources = [MangaWorld.name, NoveCoolIT.name, MangaKatana.name];
+    this.activeSources = [MangaWorld.name, NoveCoolIT.name, MangaKatana.name, MangaRead.name];
   }
 
   /**
