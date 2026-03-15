@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Image, Dimensions } from 'react-native';
+import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
 import React, {useCallback, useState} from 'react';
 import {useFocusEffect, useRouter} from 'expo-router';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -11,15 +11,17 @@ interface SavedManga {
   coverUrl: string;
   source: string;
 }
-const { width } = Dimensions.get('window');
-const COLUMN_WIDTH = (width - 40 - 15) / 2; 
-const IMAGE_WIDTH = COLUMN_WIDTH * 0.8;
 
 
 const libraryScreen = () => {
   const router=useRouter()
   const [loading, setLoading] = useState(true);
   const [library, setLibrary] = useState<SavedManga[]>([]);
+
+  const { width } = useWindowDimensions();
+  const isTablet = width > 600;
+  const cardWidth = isTablet ? 170 : 150;
+  const numColumns = isTablet ? 4 : 2;
 
   const loadLibrary = async () => {
     try {
@@ -68,8 +70,9 @@ const libraryScreen = () => {
 
       <FlatList
         data={library}
+        // key={`grid-${numColumns}`}
         keyExtractor={(item) => item.id}
-        numColumns={2}
+        numColumns={numColumns}
         columnWrapperStyle={{justifyContent: 'space-evenly', gap: 10}} 
         contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 20 }}
         
@@ -82,7 +85,8 @@ const libraryScreen = () => {
         renderItem={({ item }) => (
           <MangaCard 
             item={item} 
-            onPress={() => handleMangaPress(item)} 
+            onPress={() => handleMangaPress(item)}
+            containerStyle={{ width: cardWidth}}
           />
         )}
 

@@ -1,4 +1,4 @@
-import { View, Text, Image, StyleSheet, TextInput} from 'react-native'
+import { View, Text, Image, StyleSheet, TextInput, useWindowDimensions} from 'react-native'
 import React from 'react'
 import {icons} from "@/constants/icons";
 
@@ -11,9 +11,15 @@ interface Props{
 }
 
 export default function SearchBar({placeholder, value, onChangeText, onSubmit}:Props) {
+  const { width } = useWindowDimensions();
+  const isTablet = width > 600;
+
   return (
-    <View style={style.container}>
-      <Image source={icons.search} style={{width: 20, height: 15}} tintColor='#A8B5DB' resizeMode='contain'/>
+    <View style={[style.container, { height: isTablet ? 45 : 34 }]}>
+      <Image source={icons.search} 
+      style={{width: isTablet ? 24 : 20, height: isTablet ? 24 : 17}} 
+      tintColor='#A8B5DB' 
+      resizeMode='contain'/>
       <TextInput
         placeholder={placeholder}
         placeholderTextColor='#a8b5db'
@@ -21,7 +27,7 @@ export default function SearchBar({placeholder, value, onChangeText, onSubmit}:P
         onChangeText={onChangeText}
         onSubmitEditing={onSubmit}
         returnKeyType="search"
-        style={style.input}
+        style={[style.input, { fontSize: isTablet ? 18 : 16 }]}
         multiline={false}
         scrollEnabled={false}
       />
@@ -31,7 +37,6 @@ export default function SearchBar({placeholder, value, onChangeText, onSubmit}:P
 }
 const style = StyleSheet.create({
   container:{
-    height: 30,
     flexDirection:'row',
     borderRadius: 90,
     alignItems: 'center',

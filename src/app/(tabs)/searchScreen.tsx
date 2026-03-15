@@ -44,7 +44,15 @@ const searchScreen = () => {
           sourceName: sourceName,
           data: newBatch
         };
-        setSections((prev)=>[...prev, newSection]);
+        setSections((prev)=>{
+          const exists = prev.some(section => section.sourceName === sourceName);
+          if (exists) {
+            return prev.map(section => 
+              section.sourceName === sourceName ? newSection : section
+            );
+          }
+          return [...prev, newSection];
+        });
         
       });
     } catch (err) {

@@ -58,7 +58,7 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
     );
   }
   return (
-    <View style={{ width, height }}>
+    <View style={{ width, height, alignItems: 'center' }}>
       <Image
         source={{ uri: item.url, headers: item.headers }}
         style={{ width, height }}

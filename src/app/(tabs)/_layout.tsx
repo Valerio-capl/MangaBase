@@ -1,4 +1,4 @@
-import { View, Text, ImageBackground, Image, StyleSheet, TouchableOpacity} from 'react-native'
+import { View, Text, ImageBackground, Image, StyleSheet, TouchableOpacity, useWindowDimensions} from 'react-native'
 import React from 'react'
 import { Tabs } from 'expo-router'
 import {icons} from '@/constants/icons'
@@ -7,8 +7,19 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
   const dynamicBottom = Math.max(insets.bottom, 30);
+  const { width } = useWindowDimensions();
+  const isTablet = width > 600;
+  const barHeight = isTablet ? 70 : 50;
+  const tabHeight = isTablet ? 54 : 44;
+  const iconSize = isTablet ? 28 : 22;
+  const textSize = isTablet ? 16 : 14;
+  const pillMinWidth = isTablet ? 130 : 100;
+
   return (
-    <View style={[styles.tabBarContainer, { bottom: dynamicBottom }]}>
+    <View style={[styles.tabBarContainer, 
+      { bottom: dynamicBottom, height: barHeight },
+      isTablet ? { alignSelf: 'center', width: 450 } : { left: 15, right: 15 }]}>
+
       {state.routes.map((route: any, index: number) => {
         const isFocused = state.index === index;
 
@@ -36,11 +47,18 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
             key={route.name}
             activeOpacity={0.8}
             onPress={onPress}
-            style={isFocused ? styles.activeTab : styles.inactiveTab}
+            style={[isFocused ? styles.activeTab : styles.inactiveTab,
+              { 
+                height: tabHeight, 
+                minWidth: isFocused ? pillMinWidth : tabHeight,
+                width: isFocused ? 'auto' : tabHeight,
+                borderRadius: tabHeight / 2
+              }
+            ]}
           >
             <Image
               source={icon}
-              style={[styles.styleIcon, { tintColor: isFocused ? '#151312' : '#A8B5DB' }]}
+              style={{ width: iconSize, height: iconSize, tintColor: isFocused ? '#151312' : '#A8B5DB' }}
               resizeMode="contain"
             />
             {isFocused && (
@@ -72,12 +90,8 @@ export default _layout
 const styles = StyleSheet.create({
   tabBarContainer: {
     position: 'absolute',
-    // bottom: 30,
-    left: 15,
-    right: 15,
     backgroundColor: '#0B0E23',
-    borderRadius: 30,
-    height: 50,
+    borderRadius: 35,
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
@@ -99,8 +113,6 @@ const styles = StyleSheet.create({
     minWidth: 100,
   },
   inactiveTab: {
-    height: 44,
-    width: 44,
     justifyContent: 'center',
     alignItems: 'center',
   },
@@ -108,10 +120,6 @@ const styles = StyleSheet.create({
     color: '#151312',
     marginLeft: 6,
     fontWeight: 'bold',
-    fontSize: 14,
   },
-  styleIcon: {
-    width: 22,  
-    height: 22,
-  }
+  
 });

@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useState } from "react";
-import { Text, View, StyleSheet, Image, ScrollView, FlatList, ActivityIndicator, TouchableOpacity } from "react-native";
+import { Text, View, StyleSheet, Image, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, useWindowDimensions } from "react-native";
 import {images} from "@/constants/images";
 import SearchBar from "@/src/components/searchBar";
 import { useFocusEffect, useRouter } from "expo-router";
@@ -28,6 +28,10 @@ export default function Index() {
   const [loadingOngoing, setLoadingOngoing] = useState(true);
   const [loadingPopular, setLoadingPopular] = useState(true);
   const [jikanError, setJikanError] = useState<ErrorInfo | null>(null);
+
+  const { width } = useWindowDimensions();
+  const isTablet = width > 600;
+  const cardWidth = isTablet ? 170 : 105;
 
   useEffect(() => {
     loadJikanData();
@@ -135,7 +139,7 @@ export default function Index() {
               <MangaCard
                 item={item}
                 onPress={() => onPressItem(item)}
-                containerStyle={{ width: 105 }} 
+                containerStyle={{ width: cardWidth }} 
               /> )}
           /> )}
       </View>
