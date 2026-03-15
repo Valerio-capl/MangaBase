@@ -1,5 +1,7 @@
-import highlight from "@/assets/images/highlight.png";
+import bg from "@/assets/images/bg.png";
+import icon from '@/assets/images/icon.png';
 
 export const images = {
-  highlight,
+  bg,
+  icon
 };
