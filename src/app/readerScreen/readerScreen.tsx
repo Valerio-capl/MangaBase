@@ -39,7 +39,7 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
         }
       },
       (error) => {
-        console.warn("Errore calcolo immagine:", error);
+        console.warn("Image calculation error:", error);
         if (isMounted) {
           setHeight(width * 1.4);
           setIsCalculated(true);
@@ -71,7 +71,7 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
 export default function ReaderScreen() {
   const router = useRouter();
   const { mangaId, slug, chapterId, source, chapterList } = useLocalSearchParams<ReaderParams>();
-  console.log(`caricando ${slug} ${chapterId} da ${source}`)
+  console.log(`loading ${slug} ${chapterId} from ${source}`)
   
   const chaptersArray = chapterList ? chapterList.split(',') : [];
   const currentIndex = chaptersArray.indexOf(chapterId as string);
@@ -91,7 +91,7 @@ export default function ReaderScreen() {
       setError(null);
       setLoading(true);
       if (!mangaId || !slug || !chapterId) {
-        console.error("Parametri mancanti nel ReaderScreen");
+        console.error("Missing parameters in ReaderScreen");
         setLoading(false);
         return;
       }
@@ -104,9 +104,9 @@ export default function ReaderScreen() {
           rawData = await SourceManager.getChapterImages(source, mangaId, slug, chapterId);
         }
         if (!rawData || rawData.length === 0) {
-          console.warn("Nessuna immagine trovata");
+          console.warn("No images found");
           if (isMounted) {
-            setError({ message: "Nessuna immagine trovata. Il capitolo potrebbe essere vuoto o non supportato.", action: 'home' });
+            setError({ message: "No images found. The chapter may be empty or unsupported.", action: 'home' });
             setLoading(false)};
           return;
         }
@@ -147,7 +147,7 @@ export default function ReaderScreen() {
          }
       }
     }catch (error){
-      console.error("errore caricare progresso", error)
+      console.error("error loading progress", error)
     }
   }
 
