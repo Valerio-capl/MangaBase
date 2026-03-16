@@ -76,9 +76,9 @@ class MangaWorld {
       let author = "";
       let year = "";
       let status = "";
-      $('.meta-data .col-12').each((i, el) => {
+      $(sel.info).each((i, el) => {
         const $el = $(el);
-        const $labelNode = $el.find('span, strong, b, i').first();
+        const $labelNode = $el.find(sel.label).first();
         const labelText = $labelNode.text().toLowerCase().trim();
         const links = $el.find('a').map((_, a) => $(a).text().trim()).get()
 
@@ -162,7 +162,6 @@ class MangaWorld {
             return images.sort((a, b) => a.page - b.page);
       
           } catch (err) {
-            console.error('Errore caricamento immagini capitolo:', err);
             throw err;
           }
         }
@@ -178,7 +177,7 @@ class MangaWorld {
     
       if (error instanceof HTTPError || error instanceof ParseError) {
         throw error;}
-      throw new NetworkError(`Errore di connessione: ${error.message}`);
+      throw new NetworkError(`Connection Error: ${error.message}`);
     }
   }
 
