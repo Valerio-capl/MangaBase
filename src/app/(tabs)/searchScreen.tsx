@@ -34,7 +34,7 @@ const searchScreen = () => {
     if (!textToSearch || textToSearch.trim() === '') return;
     setLoading(true);
     setSections([]);
-    console.log("Cercando:", textToSearch);
+    console.log("loading:", textToSearch);
   
     try {
       await SourceManager.searchAll(textToSearch, (newBatch: MangaResult[]) => {
