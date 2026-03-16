@@ -27,7 +27,7 @@ export const DownloadManager = {
         try {
           await FileSystem.downloadAsync(manga.coverUrl, localCoverUri);
         } catch (e) {
-          console.warn("Impossibile scaricare cover, uso URL remoto", e);
+          console.warn("Unable to download covers, using remote URL", e);
         }
         localManga = {
           id: manga.id,
@@ -92,7 +92,7 @@ export const DownloadManager = {
       if (!localManga) return [];
       return localManga.chapters.map((c) => c.id);
     } catch (e) {
-      console.error("Errore recupero ID download:", e);
+      console.error("Download ID retrieval error:", e);
       return [];
     }
   },
@@ -110,7 +110,7 @@ export const DownloadManager = {
         
         return localChapter ? localChapter.pages : [];
       } catch (error) {
-        console.error("Errore lettura capitolo locale:", error);
+        console.error("Local chapter reading error:", error);
         return [];
       }
   },
@@ -140,10 +140,9 @@ export const DownloadManager = {
       }
 
       await AsyncStorage.setItem('downloaded_manga', JSON.stringify(db));
-      console.log("Cancellazione completata");
 
     } catch (error) {
-      console.error("Errore cancellazione:", error);
+      console.error("Error:", error);
     }
   },
 };
