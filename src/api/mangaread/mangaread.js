@@ -98,7 +98,7 @@ class MangaRead{
       });
 
       const chapters = [];
-      $(".listing-chapters_wrap ul li").each((i,el)=>{
+      $(sel.chapterRow).each((i,el)=>{
         const $row = $(el);
         const $a = $row.find(sel.chapterLink);
         const href = $a.attr("href");
@@ -124,10 +124,10 @@ class MangaRead{
         slug: slug,
         title: title,
         coverUrl: this._fixUrl(coverUrl),
-        description: description || "Descrizione non disponibile",
-        author: author || "Sconosciuto",
-        status: status || "Sconosciuto",
-        year: year ||"Sconosciuto",
+        description: description || "Description not available",
+        author: author || "Unknown",
+        status: status || "Unknown",
+        year: year ||"Unknown",
         chapters: chapters
       };
     }catch(e){
@@ -159,7 +159,7 @@ class MangaRead{
         }
       });
       if (images.length === 0) {
-        throw new ParseError("Nessuna immagine trovata. Possibile cambio layout.");
+        throw new ParseError("No pages found. Possible layout change.");
       }
       return images;
     } catch(e){
@@ -177,7 +177,7 @@ class MangaRead{
     } catch (error) {
       if (error instanceof HTTPError || error instanceof ParseError) {
         throw error;}
-      throw new NetworkError(`Errore di connessione: ${error.message}`);
+      throw new NetworkError(`Connection Error: ${error.message}`);
     }
   }
   _fixUrl(url) {
