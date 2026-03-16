@@ -37,7 +37,7 @@ const libraryScreen = () => {
         setLibrary(parsedData); 
       }
     } catch (error) {
-      console.error("Errore caricamento libreria:", error);
+      console.error("Library loading error:", error);
     } finally {
       setLoading(false);
     }
