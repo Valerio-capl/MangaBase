@@ -54,7 +54,7 @@ class NoveCoolIT{
   }
   async getMangaDetails(mangaId, slug) {
     try{
-      console.log(`caricando ${slug}`)
+      console.log(`loading ${slug}`)
       const mangaUrl = `${this.baseUrl}/novel/${slug}.html`;
       const html = await this._fetchHtml(mangaUrl);
       const $ = cheerio.load(html);
@@ -126,7 +126,7 @@ class NoveCoolIT{
       });
 
       if (pageUrls.length === 0) {
-        throw new ParseError("Nessuna pagina trovata. Possibile cambio layout di NoveCool.");
+        throw new ParseError("No pages found. Possible layout change of NoveCool.");
       }
 
       // fetch di 4 pagine per batch
@@ -157,7 +157,7 @@ class NoveCoolIT{
         images.push(...batchResults.filter(Boolean));
       }
       if (images.length === 0) {
-        throw new ParseError("Impossibile estrarre le immagini dalle pagine.");
+        throw new ParseError("Unable to extract images from pages.");
       }
       return images;
     }catch (e){
@@ -179,13 +179,13 @@ class NoveCoolIT{
   async _fetchHtml(url) {
       try{
         const response = await fetch(url, { headers: this.headers });
-        if (!response.ok) throw new HTTPError(`HTTP ${response.status} su ${url}`);
+        if (!response.ok) throw new HTTPError(`HTTP ${response.status} on ${url}`);
         return await response.text();
       } catch (error) {
       
         if (error instanceof HTTPError || error instanceof ParseError) {
           throw error;}
-        throw new NetworkError(`Errore di connessione: ${error.message}`);
+        throw new NetworkError(`Connection Error: ${error.message}`);
       }
     }
 
