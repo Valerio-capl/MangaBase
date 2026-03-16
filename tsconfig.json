@@ -13,5 +13,5 @@
     "**/*.tsx",
     ".expo/types/**/*.ts",
     "expo-env.d.ts"
-, "src/app/_layout.tsx", "src/app/(tabs)/searchScreen.tsx", "src/app/(tabs)/optionScreen.tsx", "src/app/(tabs)/libraryScreen.tsx", "src/app/(tabs)/_layout.tsx"  ]
+, "src/app/_layout.tsx", "src/app/(tabs)/searchScreen.tsx", "src/app/(tabs)/offlineScreen.tsx", "src/app/(tabs)/libraryScreen.tsx", "src/app/(tabs)/_layout.tsx"  ]
 }
