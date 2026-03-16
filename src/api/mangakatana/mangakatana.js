@@ -7,7 +7,7 @@ class MangaKatana {
         this.config = config;
         this.baseUrl = this.config.baseUrl;
         this.name = this.config.name;
-        this.lang = this.config.lang; // MangaKatana è in inglese
+        this.lang = this.config.lang;
         
         this.headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
@@ -64,7 +64,6 @@ class MangaKatana {
             const coverUrl = $(sel.cover).attr('src');
             const description = $(sel.description).text().trim();
             let author = "";
-            let artist = "";
             let status = "";
 
             $('.meta .d-row-small').each((i, el) => {
@@ -114,10 +113,10 @@ class MangaKatana {
                 slug: slug,
                 title: title,
                 coverUrl: this._fixUrl(coverUrl),
-                description: description || "Descrizione non disponibile",
-                author: author || "Sconosciuto",
-                status: status || "Sconosciuto",
-                year: "Sconosciuto",
+                description: description || "Description not available",
+                author: author || "Unknown",
+                status: status || "Unknown",
+                year: "Unknown",
                 chapters: chapters,
             };
         }catch(e){
@@ -142,7 +141,7 @@ class MangaKatana {
                         const urls = JSON.parse(jsonStr);
                         return urls;
                     } catch (e) {
-                        console.warn(`Errore parsing ${varName}:`, e);
+                        console.warn(`parsing error ${varName}:`, e);
                     }
                 }
                 return null;
@@ -188,7 +187,6 @@ class MangaKatana {
             return images;
 
         }catch(e){
-            console.error('Errore caricamento immagini MK:', e);
             throw err;
         }
 
@@ -204,7 +202,7 @@ class MangaKatana {
         
             if (error instanceof HTTPError || error instanceof ParseError) {
             throw error;}
-            throw new NetworkError(`Errore di connessione: ${error.message}`);
+            throw new NetworkError(`Connection Error: ${error.message}`);
         }
         }
     _fixUrl(url) {
