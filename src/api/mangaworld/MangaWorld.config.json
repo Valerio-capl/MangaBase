@@ -12,6 +12,8 @@
     "manga": {
       "title": "h1.name",
       "cover": ".comic-info img",
+      "info": ".meta-data .col-12",
+      "label": "span, strong, b, i",
       "chapter": ".chapter",
       "chapterDate": ".text-muted"
     },
