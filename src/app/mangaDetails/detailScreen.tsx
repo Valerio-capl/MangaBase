@@ -61,7 +61,7 @@ export default function MangaDetails() {
         const data = await SourceManager.getMangaDetails(source.toString() ,id.toString(), slug.toString());
         setManga(data);
       } catch (err) {
-        console.error("Errore dettagli:", err);
+        console.error("Details Error:", err);
         setError(getErrorMessage(err));
       } finally {
         setLoading(false);
@@ -163,12 +163,12 @@ export default function MangaDetails() {
     if (selectedChapters.length === 0) return;
     
     Alert.alert(
-      "Elimina Download",
-      `Vuoi eliminare ${selectedChapters.length} capitoli dal dispositivo?`,
+      "Delete Download",
+      `Do you want to delete ${selectedChapters.length} chapters from your device?`,
       [
-        { text: "Annulla", style: "cancel" },
+        { text: "Cancel", style: "cancel" },
         { 
-          text: "Elimina", 
+          text: "Delete", 
           style: "destructive",
           onPress: async () => {
              await DownloadManager.deleteChapters(id.toString(), selectedChapters);
@@ -206,7 +206,7 @@ export default function MangaDetails() {
       await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
 
     } catch (error) {
-      console.error("Errore nel salvataggio:", error);}
+      console.error("Saving Error:", error);}
   };
 
   const startDownload = async () => {
@@ -356,7 +356,7 @@ export default function MangaDetails() {
 
               {manga.description ? (
                 <View style={styles.descSection}>
-                  <Text style={styles.sectionTitle}>Trama</Text>
+                  {/* <Text style={styles.sectionTitle}>Plot</Text> */}
                   <Text style={styles.description} numberOfLines={isDescExpanded ? undefined : 4}>{manga.description}</Text>
                   {manga.description.length > 100 && (
                     <TouchableOpacity 
@@ -374,7 +374,7 @@ export default function MangaDetails() {
           )}
           <View style={[styles.chaptersHeader, selectionMode && styles.chaptersHeaderSelected]}>
               <Text style={styles.sectionTitle}>
-                  {selectionMode ? `Selezionati: ${selectedChapters.length}` : `Chapters (${manga.chapters.length})`}
+                  {selectionMode ? `Selected: ${selectedChapters.length}` : `Chapters (${manga.chapters.length})`}
               </Text>
 
               {/* Tasto Download e Elimina Icona (solo se non in selezione) */}
@@ -462,7 +462,7 @@ export default function MangaDetails() {
             {actionType === 'download' ? (
                 <TouchableOpacity style={styles.downloadFab} onPress={startDownload}>
                     <Text style={styles.downloadFabText}>
-                        Scarica {selectedChapters.length} Capitoli
+                        Download {selectedChapters.length} Chapters
                     </Text>
                 </TouchableOpacity>
             ) : (
@@ -471,7 +471,7 @@ export default function MangaDetails() {
                     onPress={handleDelete}
                 >
                     <Text style={[styles.downloadFabText, { color: 'white' }]}>
-                        Elimina {selectedChapters.length} Capitoli
+                        Delete {selectedChapters.length} Chapters
                     </Text>
                 </TouchableOpacity>
             )}
