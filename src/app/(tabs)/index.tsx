@@ -106,7 +106,7 @@ export default function Index() {
     data: MangaItem[], 
     onPressItem: (item: any) => void,
     isLoading?: boolean,
-    emptyText: string = "Nessun risultato",
+    emptyText: string = "No results",
     error?: ErrorInfo | null,
     onRetry?: () => void
   ) => {
@@ -167,7 +167,7 @@ export default function Index() {
             topOngoing,
             (item) => handleJikanMangaPress(item.title),
             loadingOngoing,
-            "Nessun risultato",
+            "No results",
             jikanError,
             loadJikanData
           )}
@@ -177,7 +177,7 @@ export default function Index() {
             library,
             (item) => handleLibraryMangaPress(item),
             false,
-            "Non hai ancora salvato nessun manga."
+            "You haven't saved any manga yet."
             
           )}
           <SectionDivider />
@@ -186,7 +186,7 @@ export default function Index() {
             topPopular, 
             (item) => handleJikanMangaPress(item.title),
             loadingPopular,
-            "Nessun risultato",
+            "No results",
             jikanError,
             loadJikanData
           )}
