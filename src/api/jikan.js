@@ -56,7 +56,7 @@ const fetchFromJikan = async (endpoint) => {
     
     return normalized;
   } catch (error) {
-    console.error(`Errore API Jikan:`, error);
+    console.error(`API Jikan Error:`, error);
     
     const staleCache = cache.get(endpoint);
     if (staleCache) {
@@ -68,9 +68,9 @@ const fetchFromJikan = async (endpoint) => {
     }
     if (error.message.includes("HTTP Error")) {
        const status = parseInt(error.message.split(":")[1].trim()) || 500;
-       throw new HTTPError(status, "Errore Server Jikan");
+       throw new HTTPError(status, "Server Jikan Error");
     }
-    throw new NetworkError("Nessuna connessione per raggiungere Jikan");
+    throw new NetworkError("No connection to reach Jikan");
   }
 };
 
