@@ -1,4 +1,4 @@
-import { NetworkError, HTTPError } from '../errors/SourceErrors.js';
+import { HTTPError, NetworkError } from '../errors/SourceErrors.js';
 const BASE_URL = 'https://api.jikan.moe/v4';
 
 const normalizeJikanData = (data) => {
@@ -79,5 +79,5 @@ export const getTopOngoingManga = async (limit = 10) => {
 };
 
 export const getTopPopularManga = async (limit = 10) => {
-  return await fetchFromJikan(`/top/manga?filter=bypopularity&limit=${limit}`);
+  return await fetchFromJikan(`/top/manga?limit=${limit}`);
 };
