@@ -1,13 +1,13 @@
-import React, { useCallback, useEffect, useState } from "react";
-import { Text, View, StyleSheet, Image, ScrollView, FlatList, ActivityIndicator, TouchableOpacity, useWindowDimensions } from "react-native";
-import {images} from "@/constants/images";
-import SearchBar from "@/src/components/searchBar";
-import { useFocusEffect, useRouter } from "expo-router";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import MangaCard from "@/src/components/mangaCard";
+import { images } from "@/constants/images";
 import { getTopOngoingManga, getTopPopularManga } from "@/src/api/jikan";
-import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
+import MangaCard from "@/src/components/mangaCard";
+import SearchBar from "@/src/components/searchBar";
+import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useRouter } from "expo-router";
+import React, { useCallback, useEffect, useState } from "react";
+import { ActivityIndicator, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
 
 
 interface MangaItem {
@@ -182,7 +182,7 @@ export default function Index() {
           )}
           <SectionDivider />
           {renderSection(
-            "Top Popular All Time", 
+            "Top Manga of All Time", 
             topPopular, 
             (item) => handleJikanMangaPress(item.title),
             loadingPopular,
@@ -229,7 +229,7 @@ const style = StyleSheet.create({
   divider: {
     height: 1,
     backgroundColor: 'rgba(255,255,255,0.1)', 
-    marginVertical: 15,
+    marginVertical: 8,
     marginHorizontal: 20,
     borderRadius: 1
   },
