@@ -1,50 +1,54 @@
-# Welcome to your Expo app 👋
+# MangaBase
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+MangaBase is a React Native application built with Expo designed for tracking and reading manga from various online sources. It acts as a specialized browser, utilizing custom web scrapers to aggregate content, manage a personal library, and allow offline reading.
 
-## Get started
+## Features
 
-1. Install dependencies
+* **Multi-Source Scraping:** Modular architecture supporting multiple scanlation websites.
+* **Offline Reading:** Download complete chapters locally to the device using the file system for reading without an internet connection.
+* **Library Management:** Save favorite manga and automatically track reading progress and last read chapters.
+* **Discover Section:** Integration with the Jikan API to fetch and display top ongoing and all-time popular manga.
+* **Custom Reader:** Built-in image reader with dynamic image resizing and pre-fetching capabilities for smooth scrolling.
 
-   ```bash
-   npm install
-   ```
+## Project Structure
 
-2. Start the app
+* `/src/api/` - Contains the SourceManager, DownloadManager, and individual modules for different manga sources.
+* `/src/app/` - Expo Router screens (Tabs, Reader, Details, Terms of Service).
+* `/src/components/` - Reusable UI components like MangaCard and SearchBar.
+* `/src/errors/` - Custom error classes and global error handling UI.
+* `/assets/` - Static assets, app icons, and splash screens.
 
-   ```bash
-   npx expo start
-   ```
+## Screenshots
+<p align="center">
+  <img src="readme/screenshot-home-portrait.png" width="250" />
+  <img src="readme/screenshot-details-portrait.png" width="250" />
+  <img src="readme/screenshot-offline-portrait.png" width="250" />
+</p>
 
-In the output, you'll find options to open the app in a
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Local Development
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+To run this project locally on your machine for development purposes, follow these steps:
 
-## Get a fresh project
-
-When you're ready, run:
-
+1. Clone the repository:
 ```bash
-npm run reset-project
+git clone https://github.com/Valerio-capl/MangaBase.git
+cd mangabase
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install the dependencies:
+```bash
+npm install
+```
 
-## Learn more
+3. Start the Expo development server:
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+From there, you can open the app using the Expo Go app on your physical device, or run it on an iOS Simulator or Android Emulator.
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## Disclaimer
+This application is a specialized web browser. It does not host, store, or distribute any of the manga, images, or content displayed within it. All content is dynamically scraped from third-party websites publicly available on the internet.
 
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+All manga, characters, and trademarks belong to their respective copyright owners and creators. This project is created for educational and personal use purposes.
