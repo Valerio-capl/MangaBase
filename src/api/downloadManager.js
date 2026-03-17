@@ -1,5 +1,5 @@
-import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import * as FileSystem from 'expo-file-system/legacy';
 import SourceManager from './sourceManager';
 
 const DOWNLOAD_FOLDER = FileSystem.documentDirectory + 'manga_downloads/';
@@ -52,18 +52,25 @@ export const DownloadManager = {
 
           const chapterFolder = DOWNLOAD_FOLDER + `${manga.id}/${chapter.id}/`;
           await FileSystem.makeDirectoryAsync(chapterFolder, { intermediates: true });
+          
           const localImages = [];
-          for (let i = 0; i < images.length; i++) {
-              const imgObj = images[i];
-              const fileName = `page_${String(i).padStart(3, '0')}.jpg`;
-              const fileUri = chapterFolder + fileName;
+          const downloadPromises = images.map(async (imgObj, i) => {
+            const fileName = `page_${String(i).padStart(3, '0')}.jpg`;
+            const fileUri = chapterFolder + fileName;
+            const options = {};
+            if (imgObj.headers) {
+              options.headers = imgObj.headers;
+            }
+            await FileSystem.downloadAsync(imgObj.url, fileUri, options);
+            return {
+              page: i + 1,
+              url: fileUri
+            };
+          });
+          const downloadedPages = await Promise.all(downloadPromises);
+          downloadedPages.sort((a, b) => a.page - b.page);
+          localImages.push(...downloadedPages);
 
-              await FileSystem.downloadAsync(imgObj.url, fileUri);
-              localImages.push({
-                  page: i + 1,
-                  url: fileUri
-              });
-          }
           localManga.chapters = localManga.chapters.filter((c) => c.id !== chapter.id);
           localManga.chapters.push({
             id: chapter.id,
