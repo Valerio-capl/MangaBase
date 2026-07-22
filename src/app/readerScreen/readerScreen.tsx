@@ -1,13 +1,13 @@
-
-import SourceManager from '../../api/sourceManager';
-import { DownloadManager } from '../../api/downloadManager';
-import React, { useState, useEffect } from 'react';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import AntDesign from '@expo/vector-icons/AntDesign';
-import { View, Text, Image, StyleSheet, FlatList, ActivityIndicator, Dimensions, TouchableOpacity } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import ErrorView from '@/src/errors/ErrorView';
-import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
+import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
+import AntDesign from '@expo/vector-icons/AntDesign';
+import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useEffect, useState } from 'react';
+import { ActivityIndicator, Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { DownloadManager } from '../../api/downloadManager';
+import SourceManager from '../../api/sourceManager';
 
 const { width } = Dimensions.get('window');
 interface ReaderImage {
@@ -59,11 +59,21 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
   }
   return (
     <View style={{ width, height, alignItems: 'center' }}>
-      <Image
-        source={{ uri: item.url, headers: item.headers }}
-        style={{ width, height }}
-        resizeMode="contain"
-      />
+      <ReactNativeZoomableView
+        maxZoom={3}
+        minZoom={1}
+        zoomStep={0.5}
+        initialZoom={1}
+        bindToBorders={true}
+        movementSensibility={1.5}
+        disablePanOnInitialZoom={true}
+      >
+        <Image
+          source={{ uri: item.url, headers: item.headers }}
+          style={{ width, height }}
+          resizeMode="contain"
+        />
+      </ReactNativeZoomableView>
     </View>
   );
 });
