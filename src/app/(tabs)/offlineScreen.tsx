@@ -1,9 +1,8 @@
-import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native'
-import React, { useCallback, useState } from 'react'
-import {useFocusEffect, useRouter} from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import { DownloadManager } from '@/src/api/downloadManager';
 import MangaCard from '@/src/components/mangaCard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useRouter } from 'expo-router';
+import React, { useCallback, useState } from 'react';
+import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
 interface LocalManga {
@@ -107,29 +106,30 @@ const OfflineScreen = () => {
                   const readList = readProgress[item.id] || [];
                   const unreadChapters = item.chapters.filter(ch => !readList.includes(ch.id));
                   const readChapters = item.chapters.filter(ch => readList.includes(ch.id));
-                  let chaptersToShow = []
+                  const sortDesc = (a:LocalChapter, b:LocalChapter) => {
+                    const numA = parseFloat(a.number) || 0;
+                    const numB = parseFloat(b.number) || 0;
+                    return numB - numA;
+                  };
+                  unreadChapters.sort(sortDesc);
+                  readChapters.sort(sortDesc);
+                  const chaptersToShow = [...unreadChapters, ...readChapters];
 
-                  if (unreadChapters.length >= 4) {
-                    chaptersToShow = unreadChapters.slice(0, 4);
-                  } else {
-                    const needed = 4 - unreadChapters.length;
-                    const fillWithRead = readChapters.slice(-needed);
-                    chaptersToShow = [...fillWithRead, ...unreadChapters].sort((a, b) => {
-                        const numA = parseFloat(a.number) || 0;
-                        const numB = parseFloat(b.number) || 0;
-                        return numB - numA;
-                    });
-                  }
-
-                  return chaptersToShow.map((chapter, index) => {
-                      const showChapterTitle = chapter.title && 
-                                              !chapter.title.toLowerCase().includes(`capitolo ${chapter.number}`) && 
-                                              !chapter.title.toLowerCase().includes(`chapter ${chapter.number}`);
-                      return(
+                  return (
+                    <ScrollView 
+                      nestedScrollEnabled={true}
+                      style={{ maxHeight: 120 }}
+                    >
+                    {chaptersToShow.map((chapter) => {
+                    const isRead = readList.includes(chapter.id);
+                    const showChapterTitle = chapter.title && 
+                                            !chapter.title.toLowerCase().includes(`capitolo ${chapter.number}`) && 
+                                            !chapter.title.toLowerCase().includes(`chapter ${chapter.number}`);
+                    return(
                       <TouchableOpacity 
                         key={chapter.id}
                         onPress={() => handleChapterPress(item, chapter)}
-                        style={styles.chapterBtn}
+                        style={[styles.chapterBtn, isRead && { opacity: 0.4 }]}
                       >
                         <View style={{flex: 1}}>
                             <Text style={styles.chapterNumber}>Chapter {chapter.number}</Text>
@@ -140,8 +140,10 @@ const OfflineScreen = () => {
 
                         {chapter.date && <Text style={styles.chapterDate}>{formatDate(chapter.date)}</Text>}
                       </TouchableOpacity>
-                      );
-                  });
+                    );
+                  })}
+                  </ScrollView>
+                  );
                 })()}
               </View>
 
@@ -159,7 +161,7 @@ export default OfflineScreen
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#181c2eff',
+    backgroundColor: '#181c2e',
     paddingTop: 50,
   },
   header: {
