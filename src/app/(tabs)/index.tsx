@@ -1,5 +1,5 @@
 import { images } from "@/constants/images";
-import { getTopOngoingManga, getTopPopularManga } from "@/src/api/jikan";
+import { getTopOngoingManga, getTopPopularManga } from "@/src/api/anilist";
 import MangaCard from "@/src/components/mangaCard";
 import SearchBar from "@/src/components/searchBar";
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
@@ -27,14 +27,14 @@ export default function Index() {
 
   const [loadingOngoing, setLoadingOngoing] = useState(true);
   const [loadingPopular, setLoadingPopular] = useState(true);
-  const [jikanError, setJikanError] = useState<ErrorInfo | null>(null);
+  const [anilistError, setAnilistError] = useState<ErrorInfo | null>(null);
 
   const { width } = useWindowDimensions();
   const isTablet = width > 600;
   const cardWidth = isTablet ? 170 : 105;
 
   useEffect(() => {
-    loadJikanData();
+    loadAnilistData();
   }, []);
   useFocusEffect(
     useCallback(() => {
@@ -42,9 +42,9 @@ export default function Index() {
     }, [])
   );
 
-  const loadJikanData = async () => {
+  const loadAnilistData = async () => {
     try {
-      setJikanError(null);
+      setAnilistError(null);
       setLoadingPopular(true);
       setLoadingOngoing(true);
 
@@ -54,8 +54,8 @@ export default function Index() {
       setTopPopular(popularData);
 
     } catch (error) {
-      console.error("Errore caricamento dati Jikan:", error);
-      setJikanError(getErrorMessage(error));
+      console.error("Errore caricamento dati AniList:", error);
+      setAnilistError(getErrorMessage(error));
     } finally {
       setLoadingOngoing(false);
       setLoadingPopular(false);
@@ -64,7 +64,6 @@ export default function Index() {
 
   const loadLibrary = async () => {
     try {
-      
       const storedData = await AsyncStorage.getItem('myLibrary');
       if (storedData) {
         const parsedData = JSON.parse(storedData);
@@ -94,7 +93,7 @@ export default function Index() {
       params: { id: manga.id, slug: manga.slug, source: manga.source }
     });
   };
-  const handleJikanMangaPress = (title: string) => {
+  const handleAniListMangaPress = (title: string) => {
     router.push({
       pathname: "/searchScreen",
       params: { q: title }
@@ -165,11 +164,11 @@ export default function Index() {
           {renderSection(
             "Top Ongoing", 
             topOngoing,
-            (item) => handleJikanMangaPress(item.title),
+            (item) => handleAniListMangaPress(item.title),
             loadingOngoing,
             "No results",
-            jikanError,
-            loadJikanData
+            anilistError,
+            loadAnilistData
           )}
           <SectionDivider />
           {renderSection(
@@ -184,11 +183,11 @@ export default function Index() {
           {renderSection(
             "Top Manga of All Time", 
             topPopular, 
-            (item) => handleJikanMangaPress(item.title),
+            (item) => handleAniListMangaPress(item.title),
             loadingPopular,
             "No results",
-            jikanError,
-            loadJikanData
+            anilistError,
+            loadAnilistData
           )}
         </ScrollView>
       
@@ -200,7 +199,7 @@ export default function Index() {
 const style = StyleSheet.create({
   background:{
     flex: 1,
-    backgroundColor: '#000000ff',
+    backgroundColor: '#000000',
     paddingTop:50
   },
   headerContainer: {
