@@ -7,7 +7,7 @@ MangaBase is a React Native application built with Expo designed for tracking an
 * **Multi-Source Scraping:** Modular architecture supporting multiple scanlation websites.
 * **Offline Reading:** Download complete chapters locally to the device using the file system for reading without an internet connection.
 * **Library Management:** Save favorite manga and automatically track reading progress and last read chapters.
-* **Discover Section:** Integration with the Jikan API to fetch and display top ongoing and all-time popular manga.
+* **Discover Section:** Integration with the AniList API to fetch and display top ongoing and all-time popular manga.
 * **Custom Reader:** Built-in image reader with dynamic image resizing and pre-fetching capabilities for smooth scrolling.
 
 ## Project Structure
