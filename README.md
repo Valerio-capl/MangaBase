@@ -1,3 +1,5 @@
+*Read this in other languages: [Italiano](README-it.md).*
+
 # MangaBase
 
 MangaBase is a React Native application built with Expo designed for tracking and reading manga from various online sources. It acts as a specialized browser, utilizing custom web scrapers to aggregate content, manage a personal library, and allow offline reading.
