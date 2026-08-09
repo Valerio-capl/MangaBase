@@ -13,6 +13,7 @@
       "requireFullScreen": true,
       "infoPlist": {
         "UISupportedInterfaceOrientations": [
+          "UIInterfaceOrientationPortrait",
           "UIInterfaceOrientationPortrait"
         ]
       }
@@ -54,6 +55,12 @@
       "eas": {
         "projectId": "3889060d-fdc9-4266-b93e-6fcc58b83374"
       }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/3889060d-fdc9-4266-b93e-6fcc58b83374"
     }
   }
 }
