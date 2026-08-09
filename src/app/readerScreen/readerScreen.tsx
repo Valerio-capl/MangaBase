@@ -1,11 +1,14 @@
 import ErrorView from '@/src/errors/ErrorView';
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
 import AntDesign from '@expo/vector-icons/AntDesign';
-import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
+// import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
+import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+
 import { DownloadManager } from '../../api/downloadManager';
 import SourceManager from '../../api/sourceManager';
 
@@ -27,7 +30,65 @@ type ReaderParams = {
 const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width: number }) => {
   const [height, setHeight] = useState<number>(0);
   const [isCalculated, setIsCalculated] = useState<boolean>(false);
+  const [isZoomed, setIsZoomed] = useState<boolean>(false);
 
+  const scale = useSharedValue(1);
+  const savedScale = useSharedValue(1);
+  const translateX = useSharedValue(0);
+  const translateY = useSharedValue(0);
+  const savedTranslateX = useSharedValue(0);
+  const savedTranslateY = useSharedValue(0);
+
+  const doubleTap = Gesture.Tap()
+    .numberOfTaps(2)
+    .onEnd(() => {
+      scale.value = withSpring(1);
+      savedScale.value = 1;
+      translateX.value = withSpring(0);
+      translateY.value = withSpring(0);
+      savedTranslateX.value = 0;
+      savedTranslateY.value = 0;
+      runOnJS(setIsZoomed)(false);
+    });
+
+  const pinch = Gesture.Pinch()
+    .onUpdate((event) => {
+      scale.value = Math.max(1, savedScale.value * event.scale);
+    })
+    .onEnd(() => {
+      if (scale.value > 1.05) {
+        savedScale.value = scale.value;
+        runOnJS(setIsZoomed)(true);
+      } else {
+        scale.value = withSpring(1);
+        savedScale.value = 1;
+        translateX.value = withSpring(0);
+        translateY.value = withSpring(0);
+        savedTranslateX.value = 0;
+        savedTranslateY.value = 0;
+        runOnJS(setIsZoomed)(false);
+      }
+    });
+  const pan = Gesture.Pan()
+    .enabled(isZoomed)
+    .onUpdate((event) => {
+      translateX.value = savedTranslateX.value + event.translationX;
+      translateY.value = savedTranslateY.value + event.translationY;
+    })
+    .onEnd(() => {
+      savedTranslateX.value = translateX.value;
+      savedTranslateY.value = translateY.value;
+    });
+
+  const composedGestures = Gesture.Simultaneous(pinch, pan, doubleTap);
+
+  const animatedStyle = useAnimatedStyle(() => ({
+    transform: [
+      { translateX: translateX.value },
+      { translateY: translateY.value },
+      { scale: scale.value },
+    ],
+  }));
   useEffect(() => {
     let isMounted = true;
     Image.getSize(
@@ -50,6 +111,7 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
     return () => { isMounted = false; };
   }, [item.url, width]);
 
+
   if (!isCalculated) {
     return (
       <View style={{ width: width, height: width * 1.4, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
@@ -58,22 +120,14 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
     );
   }
   return (
-    <View style={{ width, height, alignItems: 'center' }}>
-      <ReactNativeZoomableView
-        maxZoom={3}
-        minZoom={1}
-        zoomStep={0.5}
-        initialZoom={1}
-        bindToBorders={true}
-        movementSensibility={1.5}
-        disablePanOnInitialZoom={true}
-      >
-        <Image
+    <View style={{ width, height, alignItems: 'center', overflow: 'hidden', zIndex: isZoomed ? 10 : 1 }}>
+      <GestureDetector gesture={composedGestures}>
+        <Animated.Image
           source={{ uri: item.url, headers: item.headers }}
-          style={{ width, height }}
+          style={[animatedStyle, { width, height }]}
           resizeMode="contain"
         />
-      </ReactNativeZoomableView>
+      </GestureDetector>
     </View>
   );
 });
@@ -215,7 +269,7 @@ export default function ReaderScreen() {
   }
 
   return (
-    <View style={styles.container}>
+    <GestureHandlerRootView style={styles.container}>
       <FlatList
         data={images}
         keyExtractor={(item) => item.page.toString()}
@@ -223,14 +277,14 @@ export default function ReaderScreen() {
           <SelfSizingImage item={item} width={width} />
         )}
         initialNumToRender={5}
-        maxToRenderPerBatch={12}
+        maxToRenderPerBatch={11}
         windowSize={9}
         // removeClippedSubviews={true}
         ListFooterComponent={Footer}
         onEndReached={markAsRead}
         onEndReachedThreshold={0.5}
       />
-    </View>
+    </GestureHandlerRootView>
   );
 }
 
@@ -259,7 +313,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 15,
     paddingHorizontal: 70,
-    paddingBottom: 60, // Spazio extra per i dispositivi senza tasto home (iPhone)
+    paddingBottom: 60,
     backgroundColor: '#000'
   },
   navButton: {
@@ -272,7 +326,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   nextButton: {
-    backgroundColor: '#232c55', // Colore primario per risaltare
+    backgroundColor: '#232c55', 
   },
   navButtonDisabled: {
     opacity: 0.3,
