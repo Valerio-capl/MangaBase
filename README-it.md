@@ -1,10 +1,10 @@
 # MangaBase
 
-MangaBase è un'applicazione React Native creata con Expo, progettata per tracciare e leggere manga da varie fonti online. Funziona come un browser specializzato, utilizzando web scraper personalizzati per aggregare i contenuti, gestire una libreria personale e consentire la lettura offline.
+MangaBase è un'applicazione React Native creata con Expo, progettata per tracciare e leggere manga da varie fonti online. Funziona come un browser specializzato, utilizzando fetching personalizzati per aggregare i contenuti, gestire una libreria personale e consentire la lettura offline.
 
 ## Features
 
-* **Multi-Source Scraping:** Architettura modulare che supporta molteplici siti web di scanlation.
+* **Multi-Source Architecture:** Architettura modulare progettata per supportare molteplici moduli di fornitura contenuti.
 * **Offline Reading:** Scarica i capitoli completi in locale sul dispositivo utilizzando il file system per la lettura senza connessione internet.
 * **Library Management:** Salva i tuoi manga preferiti e traccia automaticamente i progressi di lettura e gli ultimi capitoli letti.
 * **Discover Section:** Integrazione con l'API AniList per recuperare e mostrare i manga più popolari del momento e di tutti i tempi.
@@ -12,7 +12,7 @@ MangaBase è un'applicazione React Native creata con Expo, progettata per tracci
 
 ## Project Structure
 
-* `/src/api/` - Contiene il SourceManager, il DownloadManager e i singoli moduli per le diverse fonti di manga.
+* `/src/api/` - Contiene il SourceManager, il DownloadManager e un file blueprint `sourceTemplate.md` che spiega la struttura richiesta per implementare i moduli di contenuto personalizzati
 * `/src/app/` - Schermate di Expo Router (Tabs, Reader, Details, Terms of Service).
 * `/src/components/` - Componenti UI riutilizzabili come MangaCard e SearchBar.
 * `/src/errors/` - Classi di errore personalizzate e UI per la gestione globale degli errori.
@@ -49,3 +49,8 @@ Per installare SideStore su iOS, puoi seguire questi passaggi essenziali (la gui
 3. **Installazione iniziale**: Tramite Iloader sul computer, installa SideStore sul tuo iPhone inserendo il tuo ID Apple e la password.
 4. **Attipazione della VPN**: Prima di aprire SideStore sul telefono per la prima volta, attiva la connessione VPN nell'app LocalDevVPN.
 5. **Utilizzo**: Apri SideStore, vai nella sezione *My Apps*, tocca l'icona `+` per selezionare il file `.ipa` di MangaBase e avvia l'installazione. Ricordati di aggiornare le app ogni 7 giorni per mantenerle attive. La VPN deve rimanere attiva solo durante l'installazione e durante gli aggiornamenti settimanali (pochi secondi)
+
+## Limitazione di Responsabilità (Disclaimer)
+Questa applicazione è un browser web specializzato. Non ospita, memorizza o distribuisce alcun media o immagine mostrata al suo interno. Tutti i contenuti vengono recuperati dinamicamente da siti web di terze parti pubblicamente disponibili su internet. 
+
+Tutti i marchi appartengono ai rispettivi proprietari e creatori. Questo progetto è stato creato strettamente a scopo educativo e personale.

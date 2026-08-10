@@ -2,11 +2,11 @@
 
 # MangaBase
 
-MangaBase is a React Native application built with Expo designed for tracking and reading manga from various online sources. It acts as a specialized browser, utilizing custom web scrapers to aggregate content, manage a personal library, and allow offline reading.
+MangaBase is a React Native application built with Expo designed for tracking and reading content from various online sources. It acts as a specialized browser, allowing users to aggregate content, manage a personal library, and enable offline reading.
 
 ## Features
 
-* **Multi-Source Scraping:** Modular architecture supporting multiple scanlation websites.
+* **Multi-Source Architecture:** Modular system designed to support multiple content provider modules.
 * **Offline Reading:** Download complete chapters locally to the device using the file system for reading without an internet connection.
 * **Library Management:** Save favorite manga and automatically track reading progress and last read chapters.
 * **Discover Section:** Integration with the AniList API to fetch and display top ongoing and all-time popular manga.
@@ -14,7 +14,7 @@ MangaBase is a React Native application built with Expo designed for tracking an
 
 ## Project Structure
 
-* `/src/api/` - Contains the SourceManager, DownloadManager, and individual modules for different manga sources.
+* `/src/api/` - Contains the SourceManager, DownloadManager, and a `sourceTemplate.md` blueprint explaining the required structure for implementing custom content provider modules.
 * `/src/app/` - Expo Router screens (Tabs, Reader, Details, Terms of Service).
 * `/src/components/` - Reusable UI components like MangaCard and SearchBar.
 * `/src/errors/` - Custom error classes and global error handling UI.
@@ -43,7 +43,11 @@ cd mangabase
 npm install
 ```
 
-3. Start the Expo development server:
+3. Configure Source Modules:
+
+To fetch content, you must implement your own source provider modules inside the /src/api/ directory (refer to sourceTemplate.md inside that folder for the required architecture and functions). Actual provider implementation files are ignored by git in the public repository for modularity and personal configuration.
+
+4. Start the Expo development server:
 ```bash
 npx expo start
 ```
@@ -51,6 +55,6 @@ npx expo start
 From there, you can open the app using the Expo Go app on your physical device, or run it on an iOS Simulator or Android Emulator.
 
 ## Disclaimer
-This application is a specialized web browser. It does not host, store, or distribute any of the manga, images, or content displayed within it. All content is dynamically scraped from third-party websites publicly available on the internet.
+This application is a specialized web browser. It does not host, store, or distribute any of the manga, images, or content displayed within it. All content is dynamically fetched from third-party websites publicly available on the internet.
 
 All manga, characters, and trademarks belong to their respective copyright owners and creators. This project is created for educational and personal use purposes.
