@@ -1,7 +1,8 @@
+import { DownloadManager } from '@/src/api/downloadManager';
 import MangaCard from '@/src/components/mangaCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 
@@ -29,8 +30,7 @@ const OfflineScreen = () => {
   
   const loadDownloads = async () => {
     try {
-      const json = await AsyncStorage.getItem('downloaded_manga');
-      setDownloadedList(json ? JSON.parse(json) : []);
+      setDownloadedList(await DownloadManager.getDownloadedManga());
       const progressJson = await AsyncStorage.getItem('read_chapters');
       setReadProgress(progressJson ? JSON.parse(progressJson) : {});
     } catch (e) {

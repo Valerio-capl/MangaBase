@@ -15,6 +15,8 @@ const toSafeName = (value) => {
   return `${readable || 'chapter'}_${(hash >>> 0).toString(36)}`;
 };
 
+const getPageFileName = (pageNumber) => `page_${String(pageNumber - 1).padStart(3, '0')}.jpg`;
+
 // Legacy entries have no stored folder, so the old id-based path is used for them
 const getChapterFolderUri = (mangaId, chapterId, storedFolder) => {
   const relativePath = storedFolder || `manga_downloads/${mangaId}/${chapterId}/`;
@@ -169,13 +171,30 @@ export const DownloadManager = {
       if (!localManga) return [];
 
       const localChapter = localManga.chapters.find((c) => c.id === chapterId);
+      if (!localChapter) return [];
+      const folderUri = getChapterFolderUri(mangaId, chapterId, localChapter.folder);
+      const pages = localChapter.pages.map((p) => ({
+        page: p.page,
+        url: folderUri + getPageFileName(p.page)
+      }));
 
-      return localChapter ? localChapter.pages : [];
+      return pages;
     } catch (error) {
       console.error("Local chapter reading error:", error);
       return [];
     }
   },
+  
+  async getDownloadedManga() {
+    const json = await AsyncStorage.getItem('downloaded_manga');
+    const db = json ? JSON.parse(json) : [];
+    return db.map((m) => (
+      m.coverUrl && m.coverUrl.startsWith('file://')
+        ? { ...m, coverUrl: DOWNLOAD_FOLDER + `cover_${m.id}.jpg` }
+        : m
+    ));
+  },
+
   async deleteChapters(mangaId, chapterIds) {
     try {
       const json = await AsyncStorage.getItem('downloaded_manga');
