@@ -1,11 +1,11 @@
-import { View, Text, ImageBackground, Image, StyleSheet, TouchableOpacity, useWindowDimensions} from 'react-native'
-import React from 'react'
-import { Tabs } from 'expo-router'
-import {icons} from '@/constants/icons'
+import { icons } from '@/constants/icons';
+import { Tabs, useRouter, type Href } from 'expo-router';
+import { Image, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 function CustomTabBar({ state, descriptors, navigation }: any) {
   const insets = useSafeAreaInsets();
+  const router = useRouter();
   const dynamicBottom = Math.max(insets.bottom, 30);
   const { width } = useWindowDimensions();
   const isTablet = width > 600;
@@ -22,25 +22,19 @@ function CustomTabBar({ state, descriptors, navigation }: any) {
 
       {state.routes.map((route: any, index: number) => {
         const isFocused = state.index === index;
-
-        const onPress = () => {
-          const event = navigation.emit({
-            type: 'tabPress',
-            target: route.key,
-            canPreventDefault: true,
-          });
-
-          if (!isFocused && !event.defaultPrevented) {
-            navigation.navigate(route.name);
-          }
-        };
-
         let icon = icons.home;
         let title = "Home";
-        if (route.name === 'index') { icon = icons.home; title = "Home"; }
-        else if (route.name === 'searchScreen') { icon = icons.search; title = "Search"; }
-        else if (route.name === 'libraryScreen') { icon = icons.save; title = "Saved"; }
-        else if (route.name === 'offlineScreen') { icon = icons.download; title = "Offline"; }
+        let href: Href = '/';
+        if (route.name === 'index') { icon = icons.home; title = "Home"; href = '/'; }
+        else if (route.name === 'searchScreen') { icon = icons.search; title = "Search"; href = '/searchScreen'; }
+        else if (route.name === 'libraryScreen') { icon = icons.save; title = "Saved"; href = '/libraryScreen'; }
+        else if (route.name === 'offlineScreen') { icon = icons.download; title = "Offline"; href = '/offlineScreen'; }
+
+        const onPress = () => {
+          if (!isFocused) {
+            router.navigate(href);
+          }
+        };
 
         return (
           <TouchableOpacity
