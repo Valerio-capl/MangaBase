@@ -29,17 +29,14 @@ const OfflineScreen = () => {
   
   const loadDownloads = async () => {
     try {
-      const json = await AsyncStorage.getItem('downloaded_manga'); 
-      if (!json) return;
-      const db = JSON.parse(json);
-      setDownloadedList(db)
+      const json = await AsyncStorage.getItem('downloaded_manga');
+      setDownloadedList(json ? JSON.parse(json) : []);
       const progressJson = await AsyncStorage.getItem('read_chapters');
-      if (progressJson) setReadProgress(JSON.parse(progressJson));
-
+      setReadProgress(progressJson ? JSON.parse(progressJson) : {});
     } catch (e) {
-        console.error("Errore:", e);
+      console.error("Errore:", e);
     } finally {
-        setLoading(false);
+      setLoading(false);
     }
   };
   const handleChapterPress = (manga: LocalManga, chapter: LocalChapter) => {

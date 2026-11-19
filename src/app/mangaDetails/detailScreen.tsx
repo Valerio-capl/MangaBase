@@ -1,16 +1,22 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import { 
-  View, Text, Image, ActivityIndicator, 
-  TouchableOpacity, FlatList, Alert, Modal
-} from 'react-native';
-import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { icons } from '@/constants/icons';
+import { DownloadManager } from '@/src/api/downloadManager';
 import SourceManager from '@/src/api/sourceManager';
 import ErrorView from '@/src/errors/ErrorView';
-import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
-import { DownloadManager } from '@/src/api/downloadManager';
-import { icons } from '@/constants/icons';
-import styles from "./styleScreen"
+import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
+import React, { useCallback, useEffect, useState } from 'react';
+import {
+  ActivityIndicator,
+  Alert,
+  FlatList,
+  Image,
+  Modal,
+  Text,
+  TouchableOpacity,
+  View
+} from 'react-native';
+import styles from "./styleScreen";
 
 interface Chapter {
   id: string;
@@ -222,13 +228,19 @@ export default function MangaDetails() {
     };
 
     DownloadManager.downloadChapters(mangaForDownload, chaptersToDownload, (msg: string) => {
-        setDownloadStatus(msg);
-    }).then(async () => {
-        setIsDownloading(false);
-        setDownloadStatus("Download Completed!");
-        setSelectedChapters([]);
-        await refreshDownloads();
-        setTimeout(() => setDownloadStatus(""), 3000);
+      setDownloadStatus(msg);
+    }).then(async (result: { failed: string[] }) => {
+      const hasErrors = result.failed.length > 0;
+      setIsDownloading(false);
+      setDownloadStatus(hasErrors ? `Failed chapters: ${result.failed.join(', ')}` : "Download Completed!");
+      setSelectedChapters([]);
+      await refreshDownloads();
+      setTimeout(() => setDownloadStatus(""), hasErrors ? 5000 : 3000);
+    }).catch((err: unknown) => {
+      console.error("Download error:", err);
+      setIsDownloading(false);
+      setDownloadStatus("Download failed");
+      setTimeout(() => setDownloadStatus(""), 3000);
     });
   };
 
