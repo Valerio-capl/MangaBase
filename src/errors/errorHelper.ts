@@ -1,4 +1,4 @@
-import { NetworkError, HTTPError, ParseError } from './SourceErrors.js';
+import { HTTPError, NetworkError, ParseError } from './SourceErrors.js';
 
 export interface ErrorInfo {
   message: string;
@@ -31,6 +31,12 @@ export const getErrorMessage = (error:any): ErrorInfo => {
         action: 'home' 
       };
     }
+    if (error.statusCode === 429) {
+      return {
+        message: "Too many requests. Wait a moment and try again.",
+        action: 'retry'
+      };
+    }
     return {
       message:`Communication error with the source (Code: ${error.statusCode}).`,
       action: 'retry' 
@@ -40,9 +46,11 @@ export const getErrorMessage = (error:any): ErrorInfo => {
     return {
       message:"Unable to read the data.",
       action: "home"
-  };
+    };
   }
+  const code = error?.statusCode ? ` (Code: ${error.statusCode})` : '';
   return {
-    message: `An unexpected error occurred. Please try again. (Code: ${error.statusCode})`,
-    action: 'retry'};
+    message: `An unexpected error occurred. Please try again.${code}`,
+    action: 'retry'
+  };
 }
