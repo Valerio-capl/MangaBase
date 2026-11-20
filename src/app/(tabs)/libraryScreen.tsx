@@ -1,8 +1,9 @@
-import { StyleSheet, Text, View, FlatList, ActivityIndicator, TouchableOpacity, Image, useWindowDimensions } from 'react-native';
-import React, {useCallback, useState} from 'react';
-import {useFocusEffect, useRouter} from 'expo-router';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getMangaKey } from '@/src/api/mangaKey';
 import MangaCard from '@/src/components/mangaCard';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { useFocusEffect, useRouter } from 'expo-router';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 
 interface SavedManga {
   id: string;
@@ -71,7 +72,7 @@ const libraryScreen = () => {
       <FlatList
         data={library}
         // key={`grid-${numColumns}`}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => getMangaKey(item)}
         numColumns={numColumns}
         columnWrapperStyle={{justifyContent: 'space-evenly', gap: 10}} 
         contentContainerStyle={{ paddingHorizontal: 10, paddingBottom: 20 }}

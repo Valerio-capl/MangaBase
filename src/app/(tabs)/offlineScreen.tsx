@@ -48,6 +48,7 @@ const OfflineScreen = () => {
         slug: manga.title,
         chapterId: chapter.id,
         source:'local',
+        originalSource: manga.originalSource,
         chapterList: chapterListString
       }
     });

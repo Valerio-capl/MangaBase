@@ -1,7 +1,6 @@
 import ErrorView from '@/src/errors/ErrorView';
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
 import AntDesign from '@expo/vector-icons/AntDesign';
-// import { ReactNativeZoomableView } from '@openspacelabs/react-native-zoomable-view';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
@@ -9,6 +8,7 @@ import { ActivityIndicator, Dimensions, FlatList, Image, StyleSheet, Text, Touch
 import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
 import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 
+import { isSameManga } from '@/src/api/mangaKey';
 import { DownloadManager } from '../../api/downloadManager';
 import SourceManager from '../../api/sourceManager';
 
@@ -24,6 +24,7 @@ type ReaderParams = {
   slug: string;
   chapterId: string;
   source: string;
+  originalSource?: string;
   chapterList?: string
 };
 
@@ -134,7 +135,7 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
 
 export default function ReaderScreen() {
   const router = useRouter();
-  const { mangaId, slug, chapterId, source, chapterList } = useLocalSearchParams<ReaderParams>();
+  const { mangaId, slug, chapterId, source, originalSource, chapterList } = useLocalSearchParams<ReaderParams>();
   console.log(`loading ${slug} ${chapterId} from ${source}`)
   
   const chaptersArray = chapterList ? chapterList.split(',') : [];
@@ -204,7 +205,7 @@ export default function ReaderScreen() {
       const libraryStr = await AsyncStorage.getItem('myLibrary');
       if (libraryStr) {
         const library = JSON.parse(libraryStr);
-        const mangaIndex = library.findIndex((m: any) => m.id === mangaId);
+        const mangaIndex = library.findIndex((m: any) => isSameManga(m, { id: mangaId, source, originalSource }));
         if (mangaIndex !== -1) { //-1 se non è salvato
           library[mangaIndex].lastRead = Date.now(); 
           await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
@@ -223,7 +224,7 @@ export default function ReaderScreen() {
         disabled={!prevChapterId}
         onPress={() => router.replace({
           pathname: "../readerScreen/readerScreen",
-          params: { mangaId, slug, source, chapterId: prevChapterId, chapterList }
+          params: { mangaId, slug, source, originalSource, chapterId: prevChapterId, chapterList }
         })}
       >
         <AntDesign name="arrow-left" size={22} color="white" />
@@ -234,7 +235,7 @@ export default function ReaderScreen() {
         disabled={!nextChapterId}
         onPress={() => router.replace({
           pathname: "../readerScreen/readerScreen",
-          params: { mangaId, slug, source, chapterId: nextChapterId, chapterList }
+          params: { mangaId, slug, source, originalSource, chapterId: nextChapterId, chapterList }
         })}
       >
         <AntDesign name="arrow-right" size={22} color="white" />

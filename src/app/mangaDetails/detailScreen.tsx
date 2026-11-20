@@ -1,8 +1,9 @@
 import { icons } from '@/constants/icons';
 import { DownloadManager } from '@/src/api/downloadManager';
+import { isSameManga } from '@/src/api/mangaKey';
 import SourceManager from '@/src/api/sourceManager';
-import ErrorView from '@/src/errors/ErrorView';
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
+import ErrorView from '@/src/errors/ErrorView';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
 import { useCallback, useEffect, useState } from 'react';
@@ -89,7 +90,7 @@ export default function MangaDetails() {
         if (storedLibrary) {
           const library = JSON.parse(storedLibrary);
           // controlla se l'ID esiste già nell'array
-          const exists = library.some((item: any) => item.id === id);
+          const exists = library.some((item: any) => isSameManga(item, { id, source }));
           setIsSaved(exists);
         }
       } catch (err) {
@@ -98,7 +99,8 @@ export default function MangaDetails() {
       }
     };
     checkStatus();
-  }, [id]);
+  }, [id, source]);
+
   useFocusEffect(
     useCallback(() => {
     refreshDownloads();
@@ -118,7 +120,6 @@ export default function MangaDetails() {
   }, [id])
   );
 
-  
   const toggleSelectionMode = () => {
     if (selectionMode) {
       setSelectionMode(false);
@@ -159,9 +160,10 @@ export default function MangaDetails() {
         pathname: "../readerScreen/readerScreen",
         params: { 
           mangaId: id, 
-          slug: slug, 
+          slug: slug,
           chapterId: chapter.id,
           source: isDownloaded ? 'local' : source,
+          originalSource: source,
           chapterList: chapterListString
         }
       });
@@ -200,7 +202,7 @@ export default function MangaDetails() {
       let library = existingLibrary ? JSON.parse(existingLibrary) : [];
 
       if (isSaved) {
-        library = library.filter((item: any) => item.id !== mangaData.id);
+        library = library.filter((item: any) => !isSameManga(item, { id: mangaData.id, source }));
         setIsSaved(false);
       }else{
         const mangaSave = {
