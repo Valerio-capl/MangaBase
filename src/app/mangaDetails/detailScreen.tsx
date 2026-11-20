@@ -32,7 +32,7 @@ interface MangaDetailsData {
   slug: string;
   title: string;
   author: string;
-  year: string; 
+  year: string;
   status: string;
   coverUrl: string;
   description: string;
@@ -57,29 +57,29 @@ export default function MangaDetails() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [downloadStatus, setDownloadStatus] = useState("");
   const [downloadedChapters, setDownloadedChapters] = useState<string[]>([]);
-  const [actionType, setActionType] = useState<'download' | 'delete'>('download'); 
+  const [actionType, setActionType] = useState<'download' | 'delete'>('download');
 
   const fetchDetails = async () => {
-      if (!id || !slug || !source){
-        setLoading(false);
-        return
-      };
-      setLoading(true);
-      setError(null);
-      try {
-        
-        const data = await SourceManager.getMangaDetails(source.toString() ,id.toString(), slug.toString());
-        setManga(data);
-      } catch (err) {
-        console.error("Details Error:", err);
-        setError(getErrorMessage(err));
-      } finally {
-        setLoading(false);
-      }
+    if (!id || !slug || !source) {
+      setLoading(false);
+      return
     };
+    setLoading(true);
+    setError(null);
+    try {
+
+      const data = await SourceManager.getMangaDetails(source.toString(), id.toString(), slug.toString());
+      setManga(data);
+    } catch (err) {
+      console.error("Details Error:", err);
+      setError(getErrorMessage(err));
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-     fetchDetails();
+    fetchDetails();
   }, [id, slug, source]);
 
   useEffect(() => {
@@ -103,21 +103,21 @@ export default function MangaDetails() {
 
   useFocusEffect(
     useCallback(() => {
-    refreshDownloads();
-    const loadReadProgress = async () => {
-      if (!id) return;
-      try {
-        const progressStr = await AsyncStorage.getItem('read_chapters');
-        if (progressStr) {
-          const progress = JSON.parse(progressStr);
-          if (progress[id.toString()]) {
-            setReadChapters(progress[id.toString()]);
+      refreshDownloads();
+      const loadReadProgress = async () => {
+        if (!id) return;
+        try {
+          const progressStr = await AsyncStorage.getItem('read_chapters');
+          if (progressStr) {
+            const progress = JSON.parse(progressStr);
+            if (progress[id.toString()]) {
+              setReadChapters(progress[id.toString()]);
+            }
           }
-        }
-      } catch (e) { console.error(e); }
-    };
-    loadReadProgress();
-  }, [id])
+        } catch (e) { console.error(e); }
+      };
+      loadReadProgress();
+    }, [id])
   );
 
   const toggleSelectionMode = () => {
@@ -141,14 +141,14 @@ export default function MangaDetails() {
 
   const handleChapterPress = (chapter: Chapter) => {
     if (!manga) return;
-    if(selectionMode){
+    if (selectionMode) {
       if (actionType === 'delete') {
-         const isDownloaded = downloadedChapters.includes(chapter.id);
-         if (!isDownloaded) {
-             return;
-         }
+        const isDownloaded = downloadedChapters.includes(chapter.id);
+        if (!isDownloaded) {
+          return;
+        }
       }
-      if(selectedChapters.includes(chapter.id)){
+      if (selectedChapters.includes(chapter.id)) {
         setSelectedChapters(selectedChapters.filter(id => id !== chapter.id));
       } else {
         setSelectedChapters([...selectedChapters, chapter.id]);
@@ -158,8 +158,8 @@ export default function MangaDetails() {
       const isDownloaded = downloadedChapters.includes(chapter.id);
       router.push({
         pathname: "../readerScreen/readerScreen",
-        params: { 
-          mangaId: id, 
+        params: {
+          mangaId: id,
           slug: slug,
           chapterId: chapter.id,
           source: isDownloaded ? 'local' : source,
@@ -173,38 +173,38 @@ export default function MangaDetails() {
   const handleDelete = async () => {
     const mangaId = Array.isArray(id) ? id[0] : id;
     if (!mangaId || selectedChapters.length === 0) return;
-    
+
     Alert.alert(
       "Delete Download",
       `Do you want to delete ${selectedChapters.length} chapters from your device?`,
       [
         { text: "Cancel", style: "cancel" },
-        { 
-          text: "Delete", 
+        {
+          text: "Delete",
           style: "destructive",
           onPress: async () => {
-             await DownloadManager.deleteChapters(mangaId, selectedChapters);
-             await refreshDownloads(); 
-             
-             setSelectionMode(false);
-             setSelectedChapters([]);
-             setDownloadStatus("Deleting Chapters");
-             setTimeout(() => setDownloadStatus(""), 1000);
+            await DownloadManager.deleteChapters(mangaId, selectedChapters, source?.toString());
+            await refreshDownloads();
+
+            setSelectionMode(false);
+            setSelectedChapters([]);
+            setDownloadStatus("Deleting Chapters");
+            setTimeout(() => setDownloadStatus(""), 1000);
           }
         }
       ]
     );
   };
 
-  const handleSavePress = async(mangaData: MangaDetailsData)=>{
-    try{
+  const handleSavePress = async (mangaData: MangaDetailsData) => {
+    try {
       const existingLibrary = await AsyncStorage.getItem('myLibrary');
       let library = existingLibrary ? JSON.parse(existingLibrary) : [];
 
       if (isSaved) {
         library = library.filter((item: any) => !isSameManga(item, { id: mangaData.id, source }));
         setIsSaved(false);
-      }else{
+      } else {
         const mangaSave = {
           id: mangaData.id,
           slug: mangaData.slug,
@@ -218,7 +218,8 @@ export default function MangaDetails() {
       await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
 
     } catch (error) {
-      console.error("Saving Error:", error);}
+      console.error("Saving Error:", error);
+    }
   };
 
   const startDownload = async () => {
@@ -229,8 +230,8 @@ export default function MangaDetails() {
     setSelectionMode(false);
     setDownloadStatus("Downloading...");
     const mangaForDownload = {
-        ...manga,
-        source: source
+      ...manga,
+      source: source
     };
 
     DownloadManager.downloadChapters(mangaForDownload, chaptersToDownload, (msg: string) => {
@@ -252,10 +253,10 @@ export default function MangaDetails() {
   };
 
   const refreshDownloads = async () => {
-      if (!id) return;
-      const ids = await DownloadManager.getDownloadedChapterIds(id.toString());
-      setDownloadedChapters(ids);
-    };
+    if (!id) return;
+    const ids = await DownloadManager.getDownloadedChapterIds(id.toString(), source?.toString());
+    setDownloadedChapters(ids);
+  };
 
   const showAllChapters = () => {
     if (manga) {
@@ -267,7 +268,7 @@ export default function MangaDetails() {
     return (
       <View style={styles.center}>
         <ActivityIndicator size="large" color="#A8B5DB" />
-        <Text style={{color: '#A8B5DB', marginTop: 10}}>Loading Details...</Text>
+        <Text style={{ color: '#A8B5DB', marginTop: 10 }}>Loading Details...</Text>
       </View>
     );
   }
@@ -280,21 +281,21 @@ export default function MangaDetails() {
     return (
       <View style={styles.center}>
         <Text style={{ color: 'white' }}>Data not found.</Text>
-        <TouchableOpacity onPress={() => router.back()} style={{marginTop: 20}}>
-          <Text style={{color: '#A8B5DB'}}>go back</Text>
+        <TouchableOpacity onPress={() => router.back()} style={{ marginTop: 20 }}>
+          <Text style={{ color: '#A8B5DB' }}>go back</Text>
         </TouchableOpacity>
       </View>
     );
   }
-  const displayedChapters =(() =>{
+  const displayedChapters = (() => {
     if (selectionMode && actionType === 'delete') {
       return manga.chapters.filter(ch => downloadedChapters.includes(ch.id));
     }
     if (selectionMode) {
       return manga.chapters;
-    } 
+    }
     return manga.chapters.slice(0, limit);
-  }) ();
+  })();
   const hasMoreChapters = limit < manga.chapters.length;
 
 
@@ -302,20 +303,20 @@ export default function MangaDetails() {
     <View style={styles.container}>
       <View style={styles.navBar}>
         {!selectionMode ? (
-           <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-             <Text style={styles.backText}>Go Back</Text>
-           </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
+            <Text style={styles.backText}>Go Back</Text>
+          </TouchableOpacity>
         ) : (
-           <TouchableOpacity onPress={toggleSelectionMode} style={styles.backButton}>
-             <Text style={[styles.backText, { color: '#FF6B6B' }]}>Cancel</Text>
-           </TouchableOpacity>
+          <TouchableOpacity onPress={toggleSelectionMode} style={styles.backButton}>
+            <Text style={[styles.backText, { color: '#FF6B6B' }]}>Cancel</Text>
+          </TouchableOpacity>
         )}
-        
+
         {/* Titolo centrato in modalità selezione */}
         {selectionMode && (
-            <Text style={styles.selectionTitle} numberOfLines={1}>
-                {manga?.title}
-            </Text>
+          <Text style={styles.selectionTitle} numberOfLines={1}>
+            {manga?.title}
+          </Text>
         )}
       </View>
       <Modal
@@ -333,7 +334,7 @@ export default function MangaDetails() {
           </View>
         </View>
       </Modal>
-    
+
       <FlatList
         data={displayedChapters}
         keyExtractor={(item) => item.id}
@@ -342,80 +343,80 @@ export default function MangaDetails() {
         ListHeaderComponent={() => (
           <View>
             {!selectionMode && (
-          //header
-            <View style={styles.headerContainer}>
-              <View style={styles.topSection}>
-                
+              //header
+              <View style={styles.headerContainer}>
+                <View style={styles.topSection}>
 
-                <Image 
-                  source={{ uri: manga.coverUrl }} 
-                  style={styles.coverImage} 
-                  resizeMode="cover" 
-                />
-                <View style={styles.infoSection}>
-                  <View style={styles.titleRow}>
-                    <Text style={styles.title} numberOfLines={3}>{manga.title}</Text>
 
-                    <TouchableOpacity onPress={() => handleSavePress(manga)}>
-                      <Image
-                        source={isSaved ? icons.saveFilled : icons.save}
-                        style={styles.saveIcon}
-                        resizeMode="contain"
-                      />
-                    </TouchableOpacity>
+                  <Image
+                    source={{ uri: manga.coverUrl }}
+                    style={styles.coverImage}
+                    resizeMode="cover"
+                  />
+                  <View style={styles.infoSection}>
+                    <View style={styles.titleRow}>
+                      <Text style={styles.title} numberOfLines={3}>{manga.title}</Text>
+
+                      <TouchableOpacity onPress={() => handleSavePress(manga)}>
+                        <Image
+                          source={isSaved ? icons.saveFilled : icons.save}
+                          style={styles.saveIcon}
+                          resizeMode="contain"
+                        />
+                      </TouchableOpacity>
+                    </View>
+                    <Text style={styles.metaText}>
+                      <Text style={styles.label}>Author: </Text>{manga.author}</Text>
+                    <Text style={styles.metaText}>
+                      <Text style={styles.label}>Year: </Text>{manga.year}</Text>
+                    <Text style={styles.metaText}>
+                      <Text style={styles.label}>Status: </Text>{manga.status}</Text>
                   </View>
-                  <Text style={styles.metaText}>
-                    <Text style={styles.label}>Author: </Text>{manga.author}</Text>
-                  <Text style={styles.metaText}>
-                    <Text style={styles.label}>Year: </Text>{manga.year}</Text>
-                  <Text style={styles.metaText}>
-                    <Text style={styles.label}>Status: </Text>{manga.status}</Text>
                 </View>
-              </View>
 
-              {manga.description ? (
-                <View style={styles.descSection}>
-                  {/* <Text style={styles.sectionTitle}>Plot</Text> */}
-                  <Text style={styles.description} numberOfLines={isDescExpanded ? undefined : 4}>{manga.description}</Text>
-                  {manga.description.length > 100 && (
-                    <TouchableOpacity 
-                      onPress={() => setIsDescExpanded(!isDescExpanded)}
-                      style={{ marginTop: 8 }}
-                    >
-                      <Text style={{ color: '#A8B5DB', fontWeight: 'bold', fontSize: 13 }}>
-                        {isDescExpanded ? 'Show less' : 'Show more...'}
-                      </Text>
-                    </TouchableOpacity>
-                  )}
-                </View>
-              ) : null}
-            </View>
-          )}
-          <View style={[styles.chaptersHeader, selectionMode && styles.chaptersHeaderSelected]}>
+                {manga.description ? (
+                  <View style={styles.descSection}>
+                    {/* <Text style={styles.sectionTitle}>Plot</Text> */}
+                    <Text style={styles.description} numberOfLines={isDescExpanded ? undefined : 4}>{manga.description}</Text>
+                    {manga.description.length > 100 && (
+                      <TouchableOpacity
+                        onPress={() => setIsDescExpanded(!isDescExpanded)}
+                        style={{ marginTop: 8 }}
+                      >
+                        <Text style={{ color: '#A8B5DB', fontWeight: 'bold', fontSize: 13 }}>
+                          {isDescExpanded ? 'Show less' : 'Show more...'}
+                        </Text>
+                      </TouchableOpacity>
+                    )}
+                  </View>
+                ) : null}
+              </View>
+            )}
+            <View style={[styles.chaptersHeader, selectionMode && styles.chaptersHeaderSelected]}>
               <Text style={styles.sectionTitle}>
-                  {selectionMode ? `Selected: ${selectedChapters.length}` : `Chapters (${manga.chapters.length})`}
+                {selectionMode ? `Selected: ${selectedChapters.length}` : `Chapters (${manga.chapters.length})`}
               </Text>
 
               {/* Tasto Download e Elimina Icona (solo se non in selezione) */}
               {!selectionMode && (
-                  <View style={{flexDirection: 'row', gap: 15, alignItems: 'center'}}>
-                      <TouchableOpacity onPress={activateDeleteMode}>
-                          <Image 
-                            source={icons.trashcan} 
-                            style={{ width: 24, height: 24 }} 
-                            resizeMode="contain" 
-                            tintColor="#FF6B6B"
-                          />
-                      </TouchableOpacity>
-                      <TouchableOpacity onPress={activateDownloadMode}>
-                          <Image 
-                            source={icons.download} 
-                            style={styles.downloadIcon} 
-                            resizeMode="contain" 
-                            tintColor="#A8B5DB"
-                          />
-                      </TouchableOpacity>
-                  </View>
+                <View style={{ flexDirection: 'row', gap: 15, alignItems: 'center' }}>
+                  <TouchableOpacity onPress={activateDeleteMode}>
+                    <Image
+                      source={icons.trashcan}
+                      style={{ width: 24, height: 24 }}
+                      resizeMode="contain"
+                      tintColor="#FF6B6B"
+                    />
+                  </TouchableOpacity>
+                  <TouchableOpacity onPress={activateDownloadMode}>
+                    <Image
+                      source={icons.download}
+                      style={styles.downloadIcon}
+                      resizeMode="contain"
+                      tintColor="#A8B5DB"
+                    />
+                  </TouchableOpacity>
+                </View>
               )}
             </View>
           </View>
@@ -434,20 +435,20 @@ export default function MangaDetails() {
           const isSelected = selectedChapters.includes(item.id);
           const isRead = readChapters.includes(item.id);
           return (
-            <TouchableOpacity 
+            <TouchableOpacity
               style={[
-                  styles.chapterItem, 
-                  selectionMode && isSelected 
-                    ? { backgroundColor: 'rgba(255, 255, 255, 0.08)' }
-                    : isRead 
-                      ? styles.read
-                      : null
+                styles.chapterItem,
+                selectionMode && isSelected
+                  ? { backgroundColor: 'rgba(255, 255, 255, 0.08)' }
+                  : isRead
+                    ? styles.read
+                    : null
               ]}
               onPress={() => handleChapterPress(item)}
               activeOpacity={0.7}
             >
               <View>
-                <Text style={[styles.chapterNumber, selectionMode && isSelected && {color: '#A8B5DB'}]}>chapter {item.number}</Text>
+                <Text style={[styles.chapterNumber, selectionMode && isSelected && { color: '#A8B5DB' }]}>chapter {item.number}</Text>
                 {/* mstra il titolo del capitolo solo se diverso da "Capitolo X" */}
                 {item.title && !item.title.toLowerCase().includes(`capitolo ${item.number}`) && !item.title.toLowerCase().includes(`chapter ${item.number}`) && (
                   <Text style={styles.chapterTitle}>{item.title}</Text>
@@ -455,45 +456,46 @@ export default function MangaDetails() {
               </View>
 
               {selectionMode ? (
-                  <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
-                      {isSelected && <Text style={styles.checkmark}>✓</Text>}
-                  </View>
+                <View style={[styles.checkbox, isSelected && styles.checkboxSelected]}>
+                  {isSelected && <Text style={styles.checkmark}>✓</Text>}
+                </View>
               ) : (
-                  item.date && <Text style={styles.chapterDate}>{item.date}</Text>
+                item.date && <Text style={styles.chapterDate}>{item.date}</Text>
               )}
             </TouchableOpacity>
-        )}}
+          )
+        }}
 
         // footer
         ListFooterComponent={() => (
           !selectionMode && hasMoreChapters ? (
             <View style={styles.footer}>
-                <TouchableOpacity style={styles.loadMoreButton} onPress={showAllChapters}>
-                    <Text style={styles.loadMoreText}>Show more...</Text>
-                </TouchableOpacity>
+              <TouchableOpacity style={styles.loadMoreButton} onPress={showAllChapters}>
+                <Text style={styles.loadMoreText}>Show more...</Text>
+              </TouchableOpacity>
             </View>
           ) : null
         )}
       />
-      
+
       {selectionMode && selectedChapters.length > 0 && (
         <View style={styles.floatingContainer}>
-            {actionType === 'download' ? (
-                <TouchableOpacity style={styles.downloadFab} onPress={startDownload}>
-                    <Text style={styles.downloadFabText}>
-                        Download {selectedChapters.length} Chapters
-                    </Text>
-                </TouchableOpacity>
-            ) : (
-                <TouchableOpacity 
-                    style={[styles.downloadFab, { backgroundColor: '#FF6B6B' }]} 
-                    onPress={handleDelete}
-                >
-                    <Text style={[styles.downloadFabText, { color: 'white' }]}>
-                        Delete {selectedChapters.length} Chapters
-                    </Text>
-                </TouchableOpacity>
-            )}
+          {actionType === 'download' ? (
+            <TouchableOpacity style={styles.downloadFab} onPress={startDownload}>
+              <Text style={styles.downloadFabText}>
+                Download {selectedChapters.length} Chapters
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <TouchableOpacity
+              style={[styles.downloadFab, { backgroundColor: '#FF6B6B' }]}
+              onPress={handleDelete}
+            >
+              <Text style={[styles.downloadFabText, { color: 'white' }]}>
+                Delete {selectedChapters.length} Chapters
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       )}
     </View>

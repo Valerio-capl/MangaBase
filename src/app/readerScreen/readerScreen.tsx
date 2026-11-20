@@ -16,7 +16,7 @@ const { width } = Dimensions.get('window');
 interface ReaderImage {
   page: number;
   url: string;
-  height?: number; 
+  height?: number;
   headers?: Record<string, string>;
 }
 type ReaderParams = {
@@ -116,7 +116,7 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
   if (!isCalculated) {
     return (
       <View style={{ width: width, height: width * 1.4, justifyContent: 'center', alignItems: 'center', backgroundColor: '#000' }}>
-         <ActivityIndicator color="#A8B5DB" />
+        <ActivityIndicator color="#A8B5DB" />
       </View>
     );
   }
@@ -137,7 +137,7 @@ export default function ReaderScreen() {
   const router = useRouter();
   const { mangaId, slug, chapterId, source, originalSource, chapterList } = useLocalSearchParams<ReaderParams>();
   console.log(`loading ${slug} ${chapterId} from ${source}`)
-  
+
   const chaptersArray = chapterList ? chapterList.split(',') : [];
   const currentIndex = chaptersArray.indexOf(chapterId as string);
   const nextChapterId = currentIndex > 0 ? chaptersArray[currentIndex - 1] : null;
@@ -164,7 +164,7 @@ export default function ReaderScreen() {
       try {
         let rawData: ReaderImage[] = [];
         if (source === 'local') {
-          rawData = await DownloadManager.getLocalChapterImages(mangaId, chapterId);
+          rawData = await DownloadManager.getLocalChapterImages(mangaId, chapterId, originalSource);
         } else {
           rawData = await SourceManager.getChapterImages(source, mangaId, slug, chapterId);
         }
@@ -172,10 +172,11 @@ export default function ReaderScreen() {
           console.warn("No images found");
           if (isMounted) {
             setError({ message: "No images found. The chapter may be empty or unsupported.", action: 'home' });
-            setLoading(false)};
+            setLoading(false)
+          };
           return;
         }
-        
+
         if (isMounted) {
           setImages(rawData);
           setLoading(false);
@@ -196,7 +197,7 @@ export default function ReaderScreen() {
 
     try {
       const progressStr = await AsyncStorage.getItem('read_chapters');
-      const progress = progressStr ? JSON.parse(progressStr) : {};         
+      const progress = progressStr ? JSON.parse(progressStr) : {};
       if (!progress[mangaId]) progress[mangaId] = [];
       if (!progress[mangaId].includes(chapterId)) {
         progress[mangaId].push(chapterId);
@@ -207,11 +208,11 @@ export default function ReaderScreen() {
         const library = JSON.parse(libraryStr);
         const mangaIndex = library.findIndex((m: any) => isSameManga(m, { id: mangaId, source, originalSource }));
         if (mangaIndex !== -1) { //-1 se non è salvato
-          library[mangaIndex].lastRead = Date.now(); 
+          library[mangaIndex].lastRead = Date.now();
           await AsyncStorage.setItem('myLibrary', JSON.stringify(library));
-         }
+        }
       }
-    }catch (error){
+    } catch (error) {
       console.error("error loading progress", error)
     }
   }
@@ -230,7 +231,7 @@ export default function ReaderScreen() {
         <AntDesign name="arrow-left" size={22} color="white" />
       </TouchableOpacity>
 
-      <TouchableOpacity 
+      <TouchableOpacity
         style={[styles.navButton, !nextChapterId && styles.navButtonDisabled]}
         disabled={!nextChapterId}
         onPress={() => router.replace({
@@ -253,10 +254,10 @@ export default function ReaderScreen() {
   }
   if (error) {
     return (
-      <ErrorView 
-        message={error.message} 
-        action={error.action} 
-        onRetry={() => setRetryTrigger(prev => prev + 1)} 
+      <ErrorView
+        message={error.message}
+        action={error.action}
+        onRetry={() => setRetryTrigger(prev => prev + 1)}
       />
     );
   }
@@ -327,7 +328,7 @@ const styles = StyleSheet.create({
     marginHorizontal: 10,
   },
   nextButton: {
-    backgroundColor: '#232c55', 
+    backgroundColor: '#232c55',
   },
   navButtonDisabled: {
     opacity: 0.3,

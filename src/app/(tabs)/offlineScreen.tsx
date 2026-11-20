@@ -1,4 +1,5 @@
 import { DownloadManager } from '@/src/api/downloadManager';
+import { getMangaKey } from '@/src/api/mangaKey';
 import MangaCard from '@/src/components/mangaCard';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
@@ -23,11 +24,11 @@ interface LocalChapter {
 }
 
 const OfflineScreen = () => {
-  const router = useRouter ();
+  const router = useRouter();
   const [DownloadedList, setDownloadedList] = useState<LocalManga[]>([]);
   const [loading, setLoading] = useState(true);
   const [readProgress, setReadProgress] = useState<Record<string, string[]>>({});
-  
+
   const loadDownloads = async () => {
     try {
       setDownloadedList(await DownloadManager.getDownloadedManga());
@@ -43,11 +44,11 @@ const OfflineScreen = () => {
     const chapterListString = manga.chapters.map(c => c.id).join(',');
     router.push({
       pathname: "../readerScreen/readerScreen",
-      params: { 
+      params: {
         mangaId: manga.id,
         slug: manga.title,
         chapterId: chapter.id,
-        source:'local',
+        source: 'local',
         originalSource: manga.originalSource,
         chapterList: chapterListString
       }
@@ -73,7 +74,7 @@ const OfflineScreen = () => {
 
       <FlatList
         data={DownloadedList}
-        keyExtractor={(item) => item.id}
+        keyExtractor={(item) => getMangaKey(item)}
         numColumns={1}
 
         ListEmptyComponent={
@@ -83,19 +84,19 @@ const OfflineScreen = () => {
         }
         renderItem={({ item }) => (
           <View style={styles.itemContainer}>
-            <MangaCard 
-              item={item} 
-              onPress={() => " "} 
+            <MangaCard
+              item={item}
+              onPress={() => " "}
               containerStyle={styles.smallCard}
               hideTitle={true}
             />
             <View style={styles.infoContainer}>
 
               <View style={styles.titleRow}>
-                 <Text style={styles.mangaTitle} numberOfLines={2}>{item.title}</Text>
-                 {item.originalSource && (
-                    <Text style={styles.originalSource}>{item.originalSource}</Text>
-                 )}
+                <Text style={styles.mangaTitle} numberOfLines={2}>{item.title}</Text>
+                {item.originalSource && (
+                  <Text style={styles.originalSource}>{item.originalSource}</Text>
+                )}
               </View>
               <View style={styles.divider} />
 
@@ -104,7 +105,7 @@ const OfflineScreen = () => {
                   const readList = readProgress[item.id] || [];
                   const unreadChapters = item.chapters.filter(ch => !readList.includes(ch.id));
                   const readChapters = item.chapters.filter(ch => readList.includes(ch.id));
-                  const sortDesc = (a:LocalChapter, b:LocalChapter) => {
+                  const sortDesc = (a: LocalChapter, b: LocalChapter) => {
                     const numA = parseFloat(a.number) || 0;
                     const numB = parseFloat(b.number) || 0;
                     return numB - numA;
@@ -114,33 +115,33 @@ const OfflineScreen = () => {
                   const chaptersToShow = [...unreadChapters, ...readChapters];
 
                   return (
-                    <ScrollView 
+                    <ScrollView
                       nestedScrollEnabled={true}
                       style={{ maxHeight: 120 }}
                     >
-                    {chaptersToShow.map((chapter) => {
-                    const isRead = readList.includes(chapter.id);
-                    const showChapterTitle = chapter.title && 
-                                            !chapter.title.toLowerCase().includes(`capitolo ${chapter.number}`) && 
-                                            !chapter.title.toLowerCase().includes(`chapter ${chapter.number}`);
-                    return(
-                      <TouchableOpacity 
-                        key={chapter.id}
-                        onPress={() => handleChapterPress(item, chapter)}
-                        style={[styles.chapterBtn, isRead && { opacity: 0.4 }]}
-                      >
-                        <View style={{flex: 1}}>
-                            <Text style={styles.chapterNumber}>Chapter {chapter.number}</Text>
-                            {showChapterTitle && (
-                              <Text style={styles.chapterTitle} numberOfLines={1}>{chapter.title}</Text>
-                            )}
-                        </View>
+                      {chaptersToShow.map((chapter) => {
+                        const isRead = readList.includes(chapter.id);
+                        const showChapterTitle = chapter.title &&
+                          !chapter.title.toLowerCase().includes(`capitolo ${chapter.number}`) &&
+                          !chapter.title.toLowerCase().includes(`chapter ${chapter.number}`);
+                        return (
+                          <TouchableOpacity
+                            key={chapter.id}
+                            onPress={() => handleChapterPress(item, chapter)}
+                            style={[styles.chapterBtn, isRead && { opacity: 0.4 }]}
+                          >
+                            <View style={{ flex: 1 }}>
+                              <Text style={styles.chapterNumber}>Chapter {chapter.number}</Text>
+                              {showChapterTitle && (
+                                <Text style={styles.chapterTitle} numberOfLines={1}>{chapter.title}</Text>
+                              )}
+                            </View>
 
-                        {chapter.date && <Text style={styles.chapterDate}>{formatDate(chapter.date)}</Text>}
-                      </TouchableOpacity>
-                    );
-                  })}
-                  </ScrollView>
+                            {chapter.date && <Text style={styles.chapterDate}>{formatDate(chapter.date)}</Text>}
+                          </TouchableOpacity>
+                        );
+                      })}
+                    </ScrollView>
                   );
                 })()}
               </View>
