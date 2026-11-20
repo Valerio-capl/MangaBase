@@ -5,7 +5,7 @@ import ErrorView from '@/src/errors/ErrorView';
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -59,7 +59,10 @@ export default function MangaDetails() {
   const [actionType, setActionType] = useState<'download' | 'delete'>('download'); 
 
   const fetchDetails = async () => {
-      if (!id || !slug) return;
+      if (!id || !slug || !source){
+        setLoading(false);
+        return
+      };
       setLoading(true);
       setError(null);
       try {
@@ -76,7 +79,7 @@ export default function MangaDetails() {
 
   useEffect(() => {
      fetchDetails();
-  }, [id, slug]);
+  }, [id, slug, source]);
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -166,7 +169,8 @@ export default function MangaDetails() {
   };
 
   const handleDelete = async () => {
-    if (selectedChapters.length === 0) return;
+    const mangaId = Array.isArray(id) ? id[0] : id;
+    if (!mangaId || selectedChapters.length === 0) return;
     
     Alert.alert(
       "Delete Download",
@@ -177,7 +181,7 @@ export default function MangaDetails() {
           text: "Delete", 
           style: "destructive",
           onPress: async () => {
-             await DownloadManager.deleteChapters(id.toString(), selectedChapters);
+             await DownloadManager.deleteChapters(mangaId, selectedChapters);
              await refreshDownloads(); 
              
              setSelectionMode(false);
@@ -229,10 +233,11 @@ export default function MangaDetails() {
 
     DownloadManager.downloadChapters(mangaForDownload, chaptersToDownload, (msg: string) => {
       setDownloadStatus(msg);
-    }).then(async (result: { failed: string[] }) => {
+    }).then(async (result: { failed: string[], skipped: string[] }) => {
       const hasErrors = result.failed.length > 0;
+      const skippedNote = result.skipped.length > 0 ? ` (${result.skipped.length} already downloaded)` : "";
       setIsDownloading(false);
-      setDownloadStatus(hasErrors ? `Failed chapters: ${result.failed.join(', ')}` : "Download Completed!");
+      setDownloadStatus(hasErrors ? `Failed chapters: ${result.failed.join(', ')}` : `Download Completed!${skippedNote}`);
       setSelectedChapters([]);
       await refreshDownloads();
       setTimeout(() => setDownloadStatus(""), hasErrors ? 5000 : 3000);

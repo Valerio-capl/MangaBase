@@ -32,10 +32,11 @@ export const DownloadManager = {
   },
   async downloadChapters(manga, chapters, onProgress) {
     const failed = [];
+    const skipped = [];
     if (!manga.source) {
       console.error("Error: Source missing");
       if (onProgress) onProgress("Error: Source missing");
-      return { failed: chapters.map((c) => c.number) };
+      return { failed: chapters.map((c) => c.number), skipped: [] };
     }
     await DownloadManager.dirExist();
 
@@ -67,6 +68,12 @@ export const DownloadManager = {
       downloadsDB.push(localManga);
     }
     for (const chapter of chapters) {
+      const existing = localManga.chapters.find((c) => c.id === chapter.id);
+      if (existing && await DownloadManager.isChapterComplete(manga.id, existing)) {
+        skipped.push(chapter.number);
+        continue;
+      }
+
       if (onProgress) onProgress(`Downloading ${chapter.title}...`);
       const safeName = toSafeName(chapter.id);
       const relativeFolder = `manga_downloads/${manga.id}/${safeName}/`;
@@ -142,7 +149,7 @@ export const DownloadManager = {
     if (onProgress) {
       onProgress(failed.length > 0 ? "Download completed with errors" : "Download Completed!");
     }
-    return { failed };
+    return { failed, skipped };
   },
 
   async getDownloadedChapterIds(mangaId) {
@@ -226,6 +233,16 @@ export const DownloadManager = {
 
     } catch (error) {
       console.error("Error:", error);
+    }
+  },
+
+  async isChapterComplete(mangaId, chapterEntry) {
+    try {
+      const folderUri = getChapterFolderUri(mangaId, chapterEntry.id, chapterEntry.folder);
+      const entries = await FileSystem.readDirectoryAsync(folderUri);
+      return chapterEntry.pages.length > 0 && entries.length === chapterEntry.pages.length;
+    } catch (e) {
+      return false;
     }
   },
 };
