@@ -1,3 +1,4 @@
+import { isSameManga } from '@/src/api/mangaKey';
 import ErrorView from '@/src/errors/ErrorView';
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
 import AntDesign from '@expo/vector-icons/AntDesign';
@@ -5,10 +6,9 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useLocalSearchParams, useRouter } from 'expo-router';
 import React, { useEffect, useState } from 'react';
 import { ActivityIndicator, Dimensions, FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
-import { Gesture, GestureDetector, GestureHandlerRootView } from 'react-native-gesture-handler';
-import Animated, { runOnJS, useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
-
-import { isSameManga } from '@/src/api/mangaKey';
+import { GestureDetector, GestureHandlerRootView, usePanGesture, usePinchGesture, useSimultaneousGestures, useTapGesture } from 'react-native-gesture-handler';
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
+import { scheduleOnRN } from 'react-native-worklets';
 import { DownloadManager } from '../../api/downloadManager';
 import SourceManager from '../../api/sourceManager';
 
@@ -40,26 +40,28 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
 
-  const doubleTap = Gesture.Tap()
-    .numberOfTaps(2)
-    .onEnd(() => {
+  const doubleTap = useTapGesture({
+    numberOfTaps: 2,
+    onDeactivate: () => {
       scale.value = withSpring(1);
       savedScale.value = 1;
       translateX.value = withSpring(0);
       translateY.value = withSpring(0);
       savedTranslateX.value = 0;
       savedTranslateY.value = 0;
-      runOnJS(setIsZoomed)(false);
-    });
+      scheduleOnRN(setIsZoomed, false);
+    },
+  });
 
-  const pinch = Gesture.Pinch()
-    .onUpdate((event) => {
+
+  const pinch = usePinchGesture({
+    onUpdate: (event) => {
       scale.value = Math.max(1, savedScale.value * event.scale);
-    })
-    .onEnd(() => {
+    },
+    onDeactivate: () => {
       if (scale.value > 1.05) {
         savedScale.value = scale.value;
-        runOnJS(setIsZoomed)(true);
+        scheduleOnRN(setIsZoomed, true);
       } else {
         scale.value = withSpring(1);
         savedScale.value = 1;
@@ -67,21 +69,24 @@ const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage, width:
         translateY.value = withSpring(0);
         savedTranslateX.value = 0;
         savedTranslateY.value = 0;
-        runOnJS(setIsZoomed)(false);
+        scheduleOnRN(setIsZoomed, false);
       }
-    });
-  const pan = Gesture.Pan()
-    .enabled(isZoomed)
-    .onUpdate((event) => {
+    },
+  });
+
+  const pan = usePanGesture({
+    enabled: isZoomed,
+    onUpdate: (event) => {
       translateX.value = savedTranslateX.value + event.translationX;
       translateY.value = savedTranslateY.value + event.translationY;
-    })
-    .onEnd(() => {
+    },
+    onDeactivate: () => {
       savedTranslateX.value = translateX.value;
       savedTranslateY.value = translateY.value;
-    });
+    },
+  });
 
-  const composedGestures = Gesture.Simultaneous(pinch, pan, doubleTap);
+  const composedGestures = useSimultaneousGestures(pinch, pan, doubleTap);
 
   const animatedStyle = useAnimatedStyle(() => ({
     transform: [
