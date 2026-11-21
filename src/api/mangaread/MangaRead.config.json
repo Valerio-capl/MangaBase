@@ -22,7 +22,7 @@
       "chapterDate": "span i"
     },
     "chapter": {
-      "image": ".reading-content .page-break img"
+      "image": ".reading-content .page-break img.wp-manga-chapter-img, .reading-content .page-break img"
     }
   }
 }

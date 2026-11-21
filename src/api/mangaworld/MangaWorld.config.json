@@ -1,29 +1,28 @@
 {
   "name": "MangaWorld",
-  "baseUrl": "https://www.mangaworld.mx",
+  "baseUrl": "https://www.mangaworld.me",
   "lang": "it",
   "selectors": {
     "search": {
-      "resultCard": ".entry",
-      "title": ".name, h3, .title",
-      "url": "a",
-      "cover": "img"
+      "resultCard": ".archive-card",
+      "title": ".card-title a, .card-title",
+      "url": ".card-title a, a.card-cover",
+      "cover": ".card-cover img, img"
     },
     "manga": {
-      "title": "h1.name",
-      "cover": ".comic-info img",
-      "info": ".meta-data .col-12",
-      "label": "span, strong, b, i",
-      "chapter": ".chapter",
-      "chapterDate": ".text-muted"
+      "title": "h1.manga-title",
+      "cover": ".manga-cover img",
+      "description": ".manga-plot",
+      "info": ".manga-facts > div",
+      "label": "dt",
+      "chapter": "#panel-capitoli .ch-row",
+      "chapterDate": ".ch-date"
     },
     "chapter": {
-      "pageSelect": "select.page, select#page-select, .page-link select",
+      "pageSelect": ".reader-progress button",
       "images": [
-        "#reader img",
-        "#page img",
-        ".reader-content img",
-        "img.img-fluid"
+        ".reader-stage img.reader-page",
+        "img[data-reader-image]"
       ]
     }
   }
