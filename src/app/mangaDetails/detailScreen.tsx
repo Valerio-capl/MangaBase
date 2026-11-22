@@ -1,6 +1,7 @@
 import { icons } from '@/constants/icons';
 import { DownloadManager } from '@/src/api/downloadManager';
 import { isSameManga } from '@/src/api/mangaKey';
+import { getContinueTarget } from '@/src/api/readingProgress';
 import SourceManager from '@/src/api/sourceManager';
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
 import ErrorView from '@/src/errors/ErrorView';
@@ -297,7 +298,18 @@ export default function MangaDetails() {
     return manga.chapters.slice(0, limit);
   })();
   const hasMoreChapters = limit < manga.chapters.length;
-
+  const continueTarget = getContinueTarget(manga.chapters, readChapters);
+  const isUpToDate = continueTarget?.state === 'upToDate';
+  let continueLabel = '';
+  if (continueTarget) {
+    if (isUpToDate) {
+      continueLabel = 'Up to date';
+    } else if (continueTarget.state === 'start') {
+      continueLabel = `Start reading · Chapter ${continueTarget.chapter.number}`;
+    } else {
+      continueLabel = `Continue · Chapter ${continueTarget.chapter.number}`;
+    }
+  }
 
   return (
     <View style={styles.container}>
@@ -345,9 +357,20 @@ export default function MangaDetails() {
             {!selectionMode && (
               //header
               <View style={styles.headerContainer}>
+                {continueTarget && (
+                  <TouchableOpacity
+                    style={[styles.continueButton, isUpToDate && styles.continueButtonDisabled]}
+                    onPress={() => handleChapterPress(continueTarget.chapter)}
+                    disabled={isUpToDate}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={[styles.continueButtonText, isUpToDate && styles.continueButtonTextDisabled]}>
+                      {continueLabel}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+
                 <View style={styles.topSection}>
-
-
                   <Image
                     source={{ uri: manga.coverUrl }}
                     style={styles.coverImage}

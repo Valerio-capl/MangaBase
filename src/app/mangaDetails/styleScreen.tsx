@@ -1,4 +1,4 @@
-import { StyleSheet} from "react-native";
+import { StyleSheet } from "react-native";
 
 
 const styles = StyleSheet.create({
@@ -169,7 +169,38 @@ const styles = StyleSheet.create({
     width: 24,
     height: 24,
   },
-  
+
+  // Continue Button
+  continueButton: {
+    backgroundColor: '#A8B5DB',
+    paddingVertical: 14,
+    paddingHorizontal: 20,
+    borderRadius: 30,
+    borderWidth: 1,
+    borderColor: 'transparent',
+    alignItems: 'center',
+    marginBottom: 6,
+    shadowColor: '#A8B5DB',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 10,
+    elevation: 5,
+  },
+  continueButtonDisabled: {
+    backgroundColor: 'rgba(255, 255, 255, 0.08)',
+    borderColor: 'rgba(255, 255, 255, 0.1)',
+    shadowOpacity: 0,
+    elevation: 0,
+  },
+  continueButtonText: {
+    color: '#1F243D',
+    fontSize: 16,
+    fontWeight: 'bold',
+  },
+  continueButtonTextDisabled: {
+    color: '#6e7a9e',
+  },
+
   // Checkbox Styles
   checkbox: {
     width: 24,
