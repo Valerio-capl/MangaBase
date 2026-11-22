@@ -35,19 +35,6 @@ export const DetailHeader = React.memo(({
 
   return (
     <View style={styles.headerContainer}>
-      {continueTarget && (
-        <TouchableOpacity
-          style={[styles.continueButton, isUpToDate && styles.continueButtonDisabled]}
-          onPress={() => onContinuePress(continueTarget.chapter)}
-          disabled={isUpToDate}
-          activeOpacity={0.8}
-        >
-          <Text style={[styles.continueButtonText, isUpToDate && styles.continueButtonTextDisabled]}>
-            {continueLabel}
-          </Text>
-        </TouchableOpacity>
-      )}
-
       <View style={styles.topSection}>
         <Image
           source={{ uri: manga.coverUrl }}
@@ -95,6 +82,19 @@ export const DetailHeader = React.memo(({
           )}
         </View>
       ) : null}
+
+      {continueTarget && (
+        <TouchableOpacity
+          style={[styles.continueButton, isUpToDate && styles.continueButtonDisabled]}
+          onPress={() => onContinuePress(continueTarget.chapter)}
+          disabled={isUpToDate}
+          activeOpacity={0.8}
+        >
+          <Text style={[styles.continueButtonText, isUpToDate && styles.continueButtonTextDisabled]}>
+            {continueLabel}
+          </Text>
+        </TouchableOpacity>
+      )}
     </View>
   );
 });

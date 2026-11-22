@@ -173,18 +173,18 @@ const styles = StyleSheet.create({
   // Continue Button
   continueButton: {
     backgroundColor: '#A8B5DB',
-    paddingVertical: 14,
-    paddingHorizontal: 20,
-    borderRadius: 30,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 20,
     borderWidth: 1,
     borderColor: 'transparent',
     alignItems: 'center',
-    marginBottom: 6,
+    marginBottom: 10,
     shadowColor: '#A8B5DB',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 6,
+    elevation: 3,
   },
   continueButtonDisabled: {
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
@@ -194,7 +194,7 @@ const styles = StyleSheet.create({
   },
   continueButtonText: {
     color: '#1F243D',
-    fontSize: 16,
+    fontSize: 14,
     fontWeight: 'bold',
   },
   continueButtonTextDisabled: {
