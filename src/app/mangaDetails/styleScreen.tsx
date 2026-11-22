@@ -43,16 +43,25 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: 'rgba(255,255,255,0.1)'
   },
-  titleRow:{
+  titleRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    marginBottom:12,
+    marginBottom: 12,
     alignItems: 'flex-start',
+    gap: 10,
   },
   infoSection: {
     flex: 1,
     marginLeft: 20,
-    justifyContent: 'flex-start', // Allinea in alto
+    marginRight: 6,
+    justifyContent: 'flex-start',
+  },
+  saveButton: {
+    padding: 2,
+    marginTop: 2,
+    flexShrink: 0,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   saveIcon: {
     width: 24,
@@ -60,6 +69,7 @@ const styles = StyleSheet.create({
     tintColor: '#A8B5DB',
   },
   title: {
+    flex: 1,
     color: 'white',
     fontSize: 20,
     fontWeight: 'bold',

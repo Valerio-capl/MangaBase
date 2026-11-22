@@ -45,7 +45,11 @@ export const DetailHeader = React.memo(({
           <View style={styles.titleRow}>
             <Text style={styles.title} numberOfLines={3}>{manga.title}</Text>
 
-            <TouchableOpacity onPress={onSavePress}>
+            <TouchableOpacity
+              onPress={onSavePress}
+              style={styles.saveButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+            >
               <Image
                 source={isSaved ? icons.saveFilled : icons.save}
                 style={styles.saveIcon}
