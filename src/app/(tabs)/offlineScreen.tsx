@@ -1,7 +1,8 @@
+import { shouldShowChapterTitle } from '@/src/api/chapterUtils';
 import { DownloadManager } from '@/src/api/downloadManager';
 import { getMangaKey } from '@/src/api/mangaKey';
+import { getAllReadingProgress } from '@/src/api/readingProgress';
 import MangaCard from '@/src/components/mangaCard';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { FlatList, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -32,8 +33,7 @@ const OfflineScreen = () => {
   const loadDownloads = async () => {
     try {
       setDownloadedList(await DownloadManager.getDownloadedManga());
-      const progressJson = await AsyncStorage.getItem('read_chapters');
-      setReadProgress(progressJson ? JSON.parse(progressJson) : {});
+      setReadProgress(await getAllReadingProgress());
     } catch (e) {
       console.error("Errore:", e);
     } finally {
@@ -121,9 +121,7 @@ const OfflineScreen = () => {
                     >
                       {chaptersToShow.map((chapter) => {
                         const isRead = readList.includes(chapter.id);
-                        const showChapterTitle = chapter.title &&
-                          !chapter.title.toLowerCase().includes(`capitolo ${chapter.number}`) &&
-                          !chapter.title.toLowerCase().includes(`chapter ${chapter.number}`);
+                        const showChapterTitle = shouldShowChapterTitle(chapter);
                         return (
                           <TouchableOpacity
                             key={chapter.id}

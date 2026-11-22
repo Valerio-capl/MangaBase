@@ -1,3 +1,44 @@
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
+const STORAGE_KEY = 'read_chapters';
+
+export const getAllReadingProgress = async () => {
+  try {
+    const progressJson = await AsyncStorage.getItem(STORAGE_KEY);
+    return progressJson ? JSON.parse(progressJson) : {};
+  } catch (error) {
+    console.error("Error loading reading progress:", error);
+    return {};
+  }
+};
+
+export const getReadChapters = async (mangaId) => {
+  if (!mangaId) return [];
+  try {
+    const progress = await getAllReadingProgress();
+    return progress[String(mangaId)] || [];
+  } catch (error) {
+    console.error("Error loading read chapters:", error);
+    return [];
+  }
+};
+
+export const saveChapterRead = async (mangaId, chapterId) => {
+  if (!mangaId || !chapterId) return [];
+  try {
+    const progress = await getAllReadingProgress();
+    const idKey = String(mangaId);
+    const previous = progress[idKey] || [];
+    const updated = [...previous.filter((readId) => readId !== chapterId), String(chapterId)];
+    progress[idKey] = updated;
+    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
+    return updated;
+  } catch (error) {
+    console.error("Error saving chapter read:", error);
+    throw error;
+  }
+};
+
 // decides which chapter the "continue" button opens.
 // chapters: newest first, the same order the reader uses for previous/next.
 // readIds: chapter ids in the order they were read, the most recent one last.

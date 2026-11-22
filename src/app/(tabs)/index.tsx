@@ -5,7 +5,7 @@ import MangaCard from "@/src/components/mangaCard";
 import SearchBar from "@/src/components/searchBar";
 import { ErrorInfo, getErrorMessage } from '@/src/errors/errorHelper';
 import MaterialIcons from '@expo/vector-icons/MaterialIcons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSavedLibrary } from "@/src/api/libraryStorage";
 import { useFocusEffect, useRouter } from "expo-router";
 import { useCallback, useEffect, useState } from "react";
 import { ActivityIndicator, FlatList, Image, ScrollView, StyleSheet, Text, TouchableOpacity, useWindowDimensions, View } from "react-native";
@@ -65,16 +65,8 @@ export default function Index() {
 
   const loadLibrary = async () => {
     try {
-      const storedData = await AsyncStorage.getItem('myLibrary');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        parsedData.sort((a: any, b: any) => {
-          const dateA = a.lastRead || 0;
-          const dateB = b.lastRead || 0;
-          return dateB - dateA;
-        });
-        setLibrary(parsedData.slice(0, 10));//ultimi 10 salvati
-      }
+      const saved = await getSavedLibrary();
+      setLibrary(saved.slice(0, 10)); // ultimi 10 salvati
     } catch (error) {
       console.error("Errore caricamento libreria:", error);
     } 

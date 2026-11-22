@@ -1,6 +1,6 @@
 import { getMangaKey } from '@/src/api/mangaKey';
 import MangaCard from '@/src/components/mangaCard';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getSavedLibrary } from '@/src/api/libraryStorage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -27,16 +27,8 @@ const libraryScreen = () => {
   const loadLibrary = async () => {
     try {
       setLoading(true);
-      const storedData = await AsyncStorage.getItem('myLibrary');
-      if (storedData) {
-        const parsedData = JSON.parse(storedData);
-        parsedData.sort((a: any, b: any) => {
-          const dateA = a.lastRead || 0;
-          const dateB = b.lastRead || 0;
-          return dateB - dateA;
-        });
-        setLibrary(parsedData); 
-      }
+      const saved = await getSavedLibrary();
+      setLibrary(saved);
     } catch (error) {
       console.error("Library loading error:", error);
     } finally {
