@@ -44,3 +44,4 @@ app-example
 
 src/api/*/*.js
 src/api/*/*.ts
+!src/api/downloads/*.js
