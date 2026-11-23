@@ -1,4 +1,4 @@
-import { HTTPError, NetworkError, ParseError } from './SourceErrors.js';
+import { HTTPError, NetworkError, ParseError, CancelledError } from './SourceErrors.js';
 
 export interface ErrorInfo {
   message: string;
@@ -6,7 +6,16 @@ export interface ErrorInfo {
 }
 
 export const getErrorMessage = (error:any): ErrorInfo => {
+  if (error instanceof CancelledError) {
+    return { message: '', action: 'none' };
+  }
   if (error instanceof NetworkError){
+    if (error.isTimeout) {
+      return {
+        message: "The source took too long to respond. Try again later.",
+        action: 'retry'
+      };
+    }
     return {
       message:"No internet connection. Check the Wi-Fi or the mobile data and try again.",
       action: 'retry' 
