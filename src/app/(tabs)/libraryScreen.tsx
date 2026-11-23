@@ -14,7 +14,7 @@ interface SavedManga {
 }
 
 
-const libraryScreen = () => {
+const LibraryScreen = () => {
   const router=useRouter()
   const [loading, setLoading] = useState(true);
   const [library, setLibrary] = useState<SavedManga[]>([]);
@@ -88,7 +88,7 @@ const libraryScreen = () => {
   );
 }
 
-export default libraryScreen
+export default LibraryScreen;
 
 const styles = StyleSheet.create({
   container: {

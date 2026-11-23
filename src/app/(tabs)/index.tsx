@@ -19,6 +19,10 @@ interface MangaItem {
   source?: string;
 }
 
+const SectionDivider = () => (
+  <View style={style.divider} />
+);
+
 export default function Index() {
   const router = useRouter();
   const [query, setQuery] = useState('');
@@ -33,15 +37,6 @@ export default function Index() {
   const { width } = useWindowDimensions();
   const isTablet = width > 600;
   const cardWidth = isTablet ? 170 : 105;
-
-  useEffect(() => {
-    loadAnilistData();
-  }, []);
-  useFocusEffect(
-    useCallback(() => {
-      loadLibrary();
-    }, [])
-  );
 
   const loadAnilistData = async () => {
     try {
@@ -71,6 +66,15 @@ export default function Index() {
       console.error("Errore caricamento libreria:", error);
     } 
   };
+
+  useEffect(() => {
+    loadAnilistData();
+  }, []);
+  useFocusEffect(
+    useCallback(() => {
+      loadLibrary();
+    }, [])
+  );
 
   const handleSearch = () => {
     if (query.trim().length > 0) {
@@ -137,9 +141,6 @@ export default function Index() {
       </View>
     );
   };
-  const SectionDivider = () => (
-    <View style={style.divider} />
-  );
   return (
     <View style={style.background}>
         <Image source={images.bg} style={{position:'absolute', width:'100%', zIndex:0, height:'100%'}}/>

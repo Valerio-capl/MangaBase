@@ -1,11 +1,11 @@
 import { StyleSheet, Text, View, ScrollView, TouchableOpacity } from 'react-native'
-import React, { useState } from 'react'
+import React from 'react'
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useRouter } from 'expo-router';
 import termsData from "./termsText";
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-export default function termsScreen() {
+export default function TermsScreen() {
   const router = useRouter()
 
   const handleAccept = async () => {

@@ -21,7 +21,7 @@ interface MangaResult {
   source: string;
 }
 
-const searchScreen = () => {
+const SearchScreen = () => {
   const router=useRouter()
   const params = useLocalSearchParams(); 
   const initialQuery = Array.isArray(params.q) ? params.q[0] : (params.q || '');
@@ -123,10 +123,10 @@ const searchScreen = () => {
             </View>
           )}
           ListEmptyComponent={
-            !loading && !error ? <Text style={styles.emptyText}>No results found.</Text> : null
+            !loading && !error ? <Text style={styles.emptyText}>No results found.</Text> : undefined
           }
           ListFooterComponent={
-            loading ? <ActivityIndicator size="small" color="#0000ff" style={{marginTop: 10}}/> : null
+            loading ? <ActivityIndicator size="small" color="#0000ff" style={{marginTop: 10}}/> : undefined
           }
         />
       )}
@@ -134,7 +134,7 @@ const searchScreen = () => {
   );
 }
 
-export default searchScreen
+export default SearchScreen;
 
 const styles = StyleSheet.create({
   container: {
