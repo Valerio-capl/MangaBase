@@ -52,7 +52,9 @@ export async function fetchHtml(url, options = {}) {
         const response = await fetch(url, { headers, signal: internal.signal });
         const text = await response.text();
         if (!response.ok) {
-          throw new HTTPError(response.status, `HTTP ${response.status} on ${shortenUrl(url)}`);
+          const httpError = new HTTPError(response.status, `HTTP ${response.status} on ${shortenUrl(url)}`);
+          httpError.retryAfterHeader = response.headers.get('retry-after');
+          throw httpError;
         }
         return { ok: true, text, response };
       } catch (err) {

@@ -1,6 +1,6 @@
 import { CancelledError } from '../../errors/SourceErrors.js';
 
-/** Waits ms milliseconds, rejects with CancelledError if signal is aborted. */
+// Waits ms milliseconds, rejects with CancelledError if signal is aborted.
 export function sleep(ms, signal) {
   return new Promise((resolve, reject) => {
     if (signal?.aborted) { reject(new CancelledError()); return; }
@@ -18,19 +18,28 @@ export function createLimiter(maxConcurrent) {
 
   function next() {
     if (active >= maxConcurrent || queue.length === 0) return;
-    const { task, signal, resolve, reject } = queue.shift();
-    if (signal?.aborted) { reject(new CancelledError()); next(); return; }
+    const entry = queue.shift();
+    entry.signal?.removeEventListener('abort', entry.onAbort);
     active++;
     Promise.resolve()
-      .then(() => task())
-      .then(resolve, reject)
+      .then(() => entry.task())
+      .then(entry.resolve, entry.reject)
       .finally(() => { active--; next(); });
   }
 
   return {
     run(task, signal) {
       return new Promise((resolve, reject) => {
-        queue.push({ task, signal, resolve, reject });
+        if (signal?.aborted) { reject(new CancelledError()); return; }
+        const entry = { task, signal, resolve, reject };
+        entry.onAbort = () => {
+          const index = queue.indexOf(entry);
+          if (index === -1) return; // already running: the task handles its own abort
+          queue.splice(index, 1);
+          reject(new CancelledError());
+        };
+        signal?.addEventListener('abort', entry.onAbort, { once: true });
+        queue.push(entry);
         next();
       });
     },
