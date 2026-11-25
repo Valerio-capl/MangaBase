@@ -1,5 +1,11 @@
-import React, { useEffect, useState } from 'react';
-import { ActivityIndicator, Image, View } from 'react-native';
+import React, { useState } from 'react';
+import {
+  ActivityIndicator,
+  ImageLoadEvent,
+  StyleSheet,
+  View,
+} from 'react-native';
+
 import {
   GestureDetector,
   usePanGesture,
@@ -10,6 +16,13 @@ import {
 import Animated, { useAnimatedStyle, useSharedValue, withSpring } from 'react-native-reanimated';
 import { scheduleOnRN } from 'react-native-worklets';
 
+interface SelfSizingImageProps {
+  item: ReaderImage;
+  width: number;
+  estimatedRatio?: number; // height / width guessed from the first loaded page
+  onMeasured?: (ratio: number) => void;
+}
+
 export interface ReaderImage {
   page: number;
   url: string;
@@ -17,9 +30,15 @@ export interface ReaderImage {
   headers?: Record<string, string>;
 }
 
-export const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage; width: number }) => {
-  const [height, setHeight] = useState<number>(0);
-  const [isCalculated, setIsCalculated] = useState<boolean>(false);
+export const SelfSizingImage = React.memo(({
+  item,
+  width,
+  estimatedRatio = 1.4,
+  onMeasured,
+}: SelfSizingImageProps) => {
+  'use no memo'; // keep React Compiler away from shared values read in gesture callbacks.
+  const [measuredRatio, setMeasuredRatio] = useState<number | null>(null);
+  const [isLoaded, setIsLoaded] = useState<boolean>(false);
   const [isZoomed, setIsZoomed] = useState<boolean>(false);
 
   const scale = useSharedValue(1);
@@ -28,6 +47,8 @@ export const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage;
   const translateY = useSharedValue(0);
   const savedTranslateX = useSharedValue(0);
   const savedTranslateY = useSharedValue(0);
+
+  const height = width * (measuredRatio ?? estimatedRatio);
 
   const doubleTap = useTapGesture({
     numberOfTaps: 2,
@@ -76,53 +97,25 @@ export const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage;
 
   const composedGestures = useSimultaneousGestures(pinch, pan, doubleTap);
 
-  const animatedStyle = useAnimatedStyle(() => ({
-    transform: [
-      { translateX: translateX.value },
-      { translateY: translateY.value },
-      { scale: scale.value },
-    ],
-  }));
-
-  useEffect(() => {
-    let isMounted = true;
-    Image.getSize(
-      item.url,
-      (w, h) => {
-        if (isMounted) {
-          setHeight(width * (h / w));
-          setIsCalculated(true);
-        }
-      },
-      (error) => {
-        console.warn("Image calculation error:", error);
-        if (isMounted) {
-          setHeight(width * 1.4);
-          setIsCalculated(true);
-        }
-      }
-    );
-
-    return () => {
-      isMounted = false;
+  const animatedStyle = useAnimatedStyle(() => {
+    return {
+      transform: [
+        { translateX: translateX.value },
+        { translateY: translateY.value },
+        { scale: scale.value },
+      ],
     };
-  }, [item.url, width]);
+  });
 
-  if (!isCalculated) {
-    return (
-      <View
-        style={{
-          width: width,
-          height: width * 1.4,
-          justifyContent: 'center',
-          alignItems: 'center',
-          backgroundColor: '#000',
-        }}
-      >
-        <ActivityIndicator color="#A8B5DB" />
-      </View>
-    );
-  }
+  const handleLoad = (event: ImageLoadEvent) => {
+    const { width: w, height: h } = event.nativeEvent.source;
+    if (w > 0 && h > 0) {
+      setMeasuredRatio(h / w);
+      onMeasured?.(h / w);
+    }
+    setIsLoaded(true);
+  };
+
 
   return (
     <View style={{ width, height, alignItems: 'center', overflow: 'hidden', zIndex: isZoomed ? 10 : 1 }}>
@@ -131,8 +124,15 @@ export const SelfSizingImage = React.memo(({ item, width }: { item: ReaderImage;
           source={{ uri: item.url, headers: item.headers }}
           style={[animatedStyle, { width, height }]}
           resizeMode="contain"
+          onLoad={handleLoad}
+          onError={() => setIsLoaded(true)}
         />
       </GestureDetector>
+      {!isLoaded && (
+        <View pointerEvents="none" style={[StyleSheet.absoluteFill, { justifyContent: 'center' }]}>
+          <ActivityIndicator color="#A8B5DB" />
+        </View>
+      )}
     </View>
   );
 });

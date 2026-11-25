@@ -5,11 +5,10 @@ import SelfSizingImage from '@/src/components/reader/selfSizingImage';
 import { useChapterImages } from '@/src/components/reader/useChapterImages';
 import ErrorView from '@/src/errors/ErrorView';
 import { useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useState } from 'react';
-import { ActivityIndicator, Dimensions, FlatList, StyleSheet, Text, View } from 'react-native';
+import { useCallback, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 
-const { width } = Dimensions.get('window');
 
 type ReaderParams = {
   mangaId: string;
@@ -23,6 +22,13 @@ type ReaderParams = {
 export default function ReaderScreen() {
   const router = useRouter();
   const { mangaId, slug, chapterId, source, originalSource, chapterList } = useLocalSearchParams<ReaderParams>();
+  
+  const { width } = useWindowDimensions();
+  const [estimatedRatio, setEstimatedRatio] = useState<number | null>(null);
+  // Only the first measured page sets the estimate for the others
+  const handleMeasured = useCallback((ratio: number) => {
+    setEstimatedRatio((prev) => prev ?? ratio);
+  }, []);
 
   const chaptersArray = chapterList ? chapterList.split(',') : [];
   const currentIndex = chaptersArray.indexOf(chapterId as string);
@@ -99,7 +105,12 @@ export default function ReaderScreen() {
         data={images}
         keyExtractor={(item) => item.page.toString()}
         renderItem={({ item }) => (
-          <SelfSizingImage item={item} width={width} />
+          <SelfSizingImage
+            item={item}
+            width={width}
+            estimatedRatio={estimatedRatio ?? undefined}
+            onMeasured={handleMeasured}
+          />
         )}
         initialNumToRender={5}
         maxToRenderPerBatch={11}
