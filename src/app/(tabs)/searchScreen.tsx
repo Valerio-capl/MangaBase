@@ -1,18 +1,11 @@
-
-import React, { useEffect, useState } from 'react';
-import { View, Text, FlatList, StyleSheet, ActivityIndicator } from 'react-native';
-import { useLocalSearchParams, useRouter } from 'expo-router';
-import SearchBar from "@/src/components/searchBar";
-import MangaCard from '@/src/components/mangaCard';
 import SourceManager from '@/src/api/sourceManager';
-import ErrorView from '@/src/errors/ErrorView';
-import { getErrorMessage, ErrorInfo } from '@/src/errors/errorHelper';
+import MangaCard from '@/src/components/mangaCard';
+import SearchBar from "@/src/components/searchBar";
+import { getErrorMessage } from '@/src/errors/errorHelper';
+import { useLocalSearchParams, useRouter } from 'expo-router';
+import { useEffect, useRef, useState } from 'react';
+import { ActivityIndicator, FlatList, StyleSheet, Text, View } from 'react-native';
 
-
-interface SourceSection {
-  sourceName: string;
-  data: MangaResult[];
-}
 interface MangaResult {
   id: string;
   slug: string;
@@ -21,47 +14,56 @@ interface MangaResult {
   source: string;
 }
 
+type SourceStatus = 'loading' | 'ok' | 'empty' | 'error';
+
+interface SourceSection {
+  sourceName: string;
+  status: SourceStatus;
+  data: MangaResult[];
+  errorMessage: string | null;
+}
+
+interface SourceUpdate {
+  source: string;
+  status: SourceStatus;
+  results?: MangaResult[];
+  error?: unknown;
+}
+
 const SearchScreen = () => {
   const router=useRouter()
   const params = useLocalSearchParams(); 
   const initialQuery = Array.isArray(params.q) ? params.q[0] : (params.q || '');
   const [query, setQuery] = useState<string>(initialQuery);
   const [sections, setSections] = useState<SourceSection[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<ErrorInfo | null>(null);
+  const abortRef = useRef<AbortController | null>(null);
 
-  const performSearch = async (textToSearch:string) => {
-    if (!textToSearch || textToSearch.trim() === '') return;
-    setLoading(true);
-    setSections([]);
-    console.log("loading:", textToSearch);
-  
-    try {
-      await SourceManager.searchAll(textToSearch, (newBatch: MangaResult[]) => {
-        if (newBatch.length === 0) return;
-        const sourceName = newBatch[0].source;
-        const newSection: SourceSection = {
-          sourceName: sourceName,
-          data: newBatch
-        };
-        setSections((prev)=>{
-          const exists = prev.some(section => section.sourceName === sourceName);
-          if (exists) {
-            return prev.map(section => 
-              section.sourceName === sourceName ? newSection : section
-            );
-          }
-          return [...prev, newSection];
-        });
-        
-      });
-    } catch (err) {
-      console.error(err);
-      setError(getErrorMessage(err));
-    } finally {
-      setLoading(false);
-    }
+  // Replaces the section of that source, or appends it the first time
+  const handleUpdate = (update: SourceUpdate) => {
+    const section: SourceSection = {
+      sourceName: update.source,
+      status: update.status,
+      data: update.results ?? [],
+      errorMessage: update.error ? getErrorMessage(update.error).message : null,
+    };
+    setSections((prev) => (
+      prev.some((s) => s.sourceName === section.sourceName)
+        ? prev.map((s) => (s.sourceName === section.sourceName ? section : s))
+        : [...prev, section]
+    ));
   };
+
+  const performSearch = async (textToSearch: string) => {
+    if (!textToSearch || textToSearch.trim() === '') return;
+    abortRef.current?.abort(); // the previous search can no longer write results
+    const controller = new AbortController();
+    abortRef.current = controller;
+    setSections([]);
+    await SourceManager.searchAll(textToSearch, handleUpdate, { signal: controller.signal });
+  };
+
+  // Abort the running search when leaving the screen
+  useEffect(() => () => abortRef.current?.abort(), []);
 
   useEffect(() => {
     if (initialQuery) {
@@ -87,49 +89,37 @@ const SearchScreen = () => {
         onSubmit={() => performSearch(query)}
         />
       </View>
+      <FlatList
+        data={sections}
+        keyExtractor={(item) => item.sourceName}
+        contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
+        renderItem={({ item }) => (
+          <View style={styles.sectionContainer}>
+            <View style={styles.sectionHeader}>
+              <Text style={styles.sectionTitle}>{item.sourceName}</Text>
+              <View style={styles.divider} />
+              {item.status === 'ok' && <Text style={styles.resultCount}>{item.data.length}</Text>}
+            </View>
 
-    {loading && sections.length === 0 ? (
-      <View style={styles.center}>
-        <ActivityIndicator size="large" color="#0000ff"/>
-      </View>
-      ) : error && sections.length === 0 ? (
-        <ErrorView 
-          message={error.message} 
-          action={error.action} 
-          onRetry={() => performSearch(query)} 
-        />
-      ) : (
-        <FlatList
-          data={sections}
-          keyExtractor={(item) => item.sourceName}
-          contentContainerStyle={{ paddingHorizontal: 20, paddingBottom: 20 }}
-          renderItem={({ item }) => (
-            <View style={styles.sectionContainer}>
-              {/* HEADER DEL SORGENTE */}
-              <View style={styles.sectionHeader}>
-                <Text style={styles.sectionTitle}>{item.sourceName}</Text>
-                <View style={styles.divider} />
-                <Text style={styles.resultCount}>{item.data.length}</Text>
-              </View>
-
-              {/* GRIGLIA DEI MANGA */}
+            {item.status === 'loading' && (
+              <ActivityIndicator size="small" color="#A8B5DB" style={styles.statusRow} />
+            )}
+            {item.status === 'empty' && <Text style={styles.emptyText}>No results found.</Text>}
+            {item.status === 'error' && <Text style={styles.errorText}>{item.errorMessage}</Text>}
+            {item.status === 'ok' && (
               <View style={styles.gridContainer}>
-                {item.data.map((manga) => <MangaCard
+                {item.data.map((manga) => (
+                  <MangaCard
                     key={`${manga.source}-${manga.id}`}
                     item={manga}
-                    onPress={()=>handleMangaPress(manga)}
-                  />)}
+                    onPress={() => handleMangaPress(manga)}
+                  />
+                ))}
               </View>
-            </View>
-          )}
-          ListEmptyComponent={
-            !loading && !error ? <Text style={styles.emptyText}>No results found.</Text> : undefined
-          }
-          ListFooterComponent={
-            loading ? <ActivityIndicator size="small" color="#0000ff" style={{marginTop: 10}}/> : undefined
-          }
-        />
-      )}
+            )}
+          </View>
+        )}
+      />
     </View>
   );
 }
@@ -161,11 +151,6 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginRight: 10,
   },
-  center: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
   gridContainer: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -185,6 +170,15 @@ const styles = StyleSheet.create({
   emptyText: {
     color: '#888',
     textAlign: 'center',
-    marginTop: 40,
+    marginTop: 12,
+  },
+  statusRow: { 
+    marginVertical: 12 
+  },
+  errorText: {
+    color: '#FF6B6B',
+    fontSize: 13,
+    textAlign: 'center',
+    lineHeight: 18
   },
 });

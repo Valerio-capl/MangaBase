@@ -16,30 +16,25 @@ class SourceManager {
     this.activeSources = [MangaWorld.name, NoveCoolIT.name, MangaKatana.name, MangaRead.name];
   }
 
-  /**
-   * @param {string} query 
-   * @param {function} onResult 
-   */
-  async searchAll(query, onResult, options = {}) {
-    const promises = this.activeSources.map(async (sourceName) => {
-      const source = this.sources[sourceName];
-      if (!source) return Promise.reject(new Error("Source not found"));
+  // Searches every active source in parallel.
 
-      const results = await source.searchManga(query, { signal: options.signal });
-      const taggedResults = results.map(item => ({
-        ...item,
-        source: sourceName 
-      }));
+  async searchAll(query, onUpdate, options = {}) {
+    const { signal } = options;
+    if (signal?.aborted) return;
+    // Report every source as loading first, so the UI can draw all sections at once
+    this.activeSources.forEach((sourceName) => onUpdate({ source: sourceName, status: 'loading' }));
 
-      if (onResult && taggedResults.length > 0) {
-        onResult(taggedResults);
+    await Promise.allSettled(this.activeSources.map(async (sourceName) => {
+      try {
+        const results = await this.sources[sourceName].searchManga(query, { signal });
+        if (signal?.aborted) return;
+        const tagged = results.map((item) => ({ ...item, source: sourceName }));
+        onUpdate({ source: sourceName, status: tagged.length > 0 ? 'ok' : 'empty', results: tagged });
+      } catch (error) {
+        if (signal?.aborted) return;
+        onUpdate({ source: sourceName, status: 'error', error });
       }
-    });
-    const settledPromises = await Promise.allSettled(promises);
-    const allFailed = settledPromises.every(p => p.status === 'rejected');
-    if (allFailed && settledPromises.length > 0) {
-      throw settledPromises[0].reason; 
-    }
+    }));
   }
 
   async getMangaDetails(sourceName, mangaId, slug, options = {}) {
