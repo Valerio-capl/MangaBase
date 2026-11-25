@@ -1,6 +1,25 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { runWithConcurrency, sleep } from '../http/asyncUtils';
 import SourceManager from '../sourceManager';
 import { getChapterFolderUri, toSafeName } from './paths';
+
+const PAGE_CONCURRENCY = 4;
+const PAGE_RETRIES = 2;
+// Downloads one page, retrying on any failure.
+const downloadPageWithRetry = async (url, destination, options) => {
+  let lastError;
+  for (let attempt = 0; attempt <= PAGE_RETRIES; attempt++) {
+    try {
+      const result = await FileSystem.downloadAsync(url, destination, options);
+      if (result.status === 200) return;
+      lastError = new Error(`HTTP ${result.status}`);
+    } catch (error) {
+      lastError = error;
+    }
+    if (attempt < PAGE_RETRIES) await sleep(500 * (attempt + 1));
+  }
+  throw lastError;
+};
 
 export const isChapterComplete = async (mangaId, chapterEntry) => {
   try {
@@ -43,18 +62,15 @@ export const downloadSingleChapter = async ({
     await FileSystem.deleteAsync(tempFolder, { idempotent: true });
     await FileSystem.makeDirectoryAsync(tempFolder, { intermediates: true });
 
-    const results = await Promise.allSettled(images.map(async (imgObj, i) => {
+    const results = await runWithConcurrency(images, PAGE_CONCURRENCY, async (imgObj, i) => {
       if (!imgObj.url) {
         throw new Error(`Missing URL for page ${i + 1}`);
       }
       const fileName = `page_${String(i).padStart(3, '0')}.jpg`;
       const options = imgObj.headers ? { headers: imgObj.headers } : {};
-      const result = await FileSystem.downloadAsync(imgObj.url, tempFolder + fileName, options);
-      if (result.status !== 200) {
-        throw new Error(`HTTP ${result.status} on page ${i + 1}`);
-      }
+      await downloadPageWithRetry(imgObj.url, tempFolder + fileName, options);
       return { page: i + 1, url: finalFolder + fileName };
-    }));
+    });
 
     const failedPages = results.filter((r) => r.status === 'rejected');
     if (failedPages.length > 0) {
