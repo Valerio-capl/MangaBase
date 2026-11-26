@@ -1,38 +1,37 @@
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { getDb } from './db/database';
+import { resolveSource } from './mangaKey';
 
-const STORAGE_KEY = 'read_chapters';
+// Same rule as the library: a row or a query without source matches by id alone
+const MATCH = "manga_id = ? AND (source = ? OR source = '' OR ? = '')";
 
-export const getAllReadingProgress = async () => {
-  try {
-    const progressJson = await AsyncStorage.getItem(STORAGE_KEY);
-    return progressJson ? JSON.parse(progressJson) : {};
-  } catch (error) {
-    console.error("Error loading reading progress:", error);
-    return {};
-  }
-};
-
-export const getReadChapters = async (mangaId) => {
+// Chapter ids in reading order, the most recently read one last
+export const getReadChapters = async (mangaId, source, originalSource) => {
   if (!mangaId) return [];
   try {
-    const progress = await getAllReadingProgress();
-    return progress[String(mangaId)] || [];
+    const db = await getDb();
+    const sourceName = resolveSource({ source, originalSource });
+    const rows = await db.getAllAsync(
+      `SELECT chapter_id FROM read_chapters
+       WHERE ${MATCH}
+       GROUP BY chapter_id
+       ORDER BY MAX(read_at) ASC`,
+      [String(mangaId), sourceName, sourceName]
+    );
+    return rows.map((row) => row.chapter_id);
   } catch (error) {
     console.error("Error loading read chapters:", error);
     return [];
   }
 };
 
-export const saveChapterRead = async (mangaId, chapterId) => {
-  if (!mangaId || !chapterId) return [];
+export const saveChapterRead = async (mangaId, chapterId, source, originalSource) => {
+  if (!mangaId || !chapterId) return;
   try {
-    const progress = await getAllReadingProgress();
-    const idKey = String(mangaId);
-    const previous = progress[idKey] || [];
-    const updated = [...previous.filter((readId) => readId !== chapterId), String(chapterId)];
-    progress[idKey] = updated;
-    await AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(progress));
-    return updated;
+    const db = await getDb();
+    await db.runAsync(
+      'INSERT OR REPLACE INTO read_chapters (source, manga_id, chapter_id, read_at) VALUES (?, ?, ?, ?)',
+      [resolveSource({ source, originalSource }), String(mangaId), String(chapterId), Date.now()]
+    );
   } catch (error) {
     console.error("Error saving chapter read:", error);
     throw error;

@@ -1,7 +1,7 @@
 import { shouldShowChapterTitle } from '@/src/api/chapterUtils';
 import { DownloadManager } from '@/src/api/downloadManager';
 import { getMangaKey } from '@/src/api/mangaKey';
-import { getAllReadingProgress } from '@/src/api/readingProgress';
+import { getReadChapters } from '@/src/api/readingProgress';
 import MangaCard from '@/src/components/mangaCard';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -32,10 +32,15 @@ const OfflineScreen = () => {
 
   const loadDownloads = async () => {
     try {
-      setDownloadedList(await DownloadManager.getDownloadedManga());
-      setReadProgress(await getAllReadingProgress());
+      const list = await DownloadManager.getDownloadedManga();
+      setDownloadedList(list);
+      const progress: Record<string, string[]> = {};
+      for (const manga of list) {
+        progress[getMangaKey(manga)] = await getReadChapters(manga.id, manga.originalSource);
+      }
+      setReadProgress(progress);
     } catch (e) {
-      console.error("Errore:", e);
+      console.error("Error:", e);
     } finally {
       setLoading(false);
     }
@@ -102,7 +107,7 @@ const OfflineScreen = () => {
 
               <View style={styles.chaptersContainer}>
                 {(() => {
-                  const readList = readProgress[item.id] || [];
+                  const readList = readProgress[getMangaKey(item)] || [];
                   const unreadChapters = item.chapters.filter(ch => !readList.includes(ch.id));
                   const readChapters = item.chapters.filter(ch => readList.includes(ch.id));
                   const sortDesc = (a: LocalChapter, b: LocalChapter) => {

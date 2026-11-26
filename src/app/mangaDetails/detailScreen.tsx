@@ -11,7 +11,7 @@ import { useChapterSelection } from '@/src/components/details/useChapterSelectio
 import { useMangaDetails } from '@/src/components/details/useMangaDetails';
 import ErrorView from '@/src/errors/ErrorView';
 import { useFocusEffect, useLocalSearchParams, useRouter } from 'expo-router';
-import React, { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { ActivityIndicator, FlatList, Text, TouchableOpacity, View } from 'react-native';
 import styles from "./styleScreen";
 
@@ -58,7 +58,7 @@ export default function MangaDetails() {
       if (!id) return;
       const mangaId = id.toString();
       refreshDownloads(mangaId, source?.toString());
-      getReadChapters(mangaId).then(setReadChapters);
+      getReadChapters(mangaId, source?.toString()).then(setReadChapters);
     }, [id, source, refreshDownloads])
   );
 

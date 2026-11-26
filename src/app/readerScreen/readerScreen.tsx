@@ -50,7 +50,7 @@ export default function ReaderScreen() {
     setHasMarkedRead(true);
 
     try {
-      await saveChapterRead(mangaId, chapterId);
+      await saveChapterRead(mangaId, chapterId, source, originalSource);
       await updateLastRead(mangaId, source, originalSource);
     } catch (error) {
       console.error("error loading progress", error);
