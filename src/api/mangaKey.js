@@ -4,7 +4,7 @@
 const LOCAL_SOURCE = 'local';
 const clean = (value) => (value === undefined || value === null ? '' : String(value));
 
-const resolveSource = (manga) => {
+export const resolveSource = (manga) => {
   const source = clean(manga?.source);
   return source === LOCAL_SOURCE ? clean(manga?.originalSource) : source;
 };
