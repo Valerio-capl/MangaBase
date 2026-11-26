@@ -1,11 +1,6 @@
 import { getDb } from './db/database';
-import { resolveSource } from './mangaKey';
-
+import { SQL_MATCH as MATCH, matchParams, resolveSource } from './mangaKey';
 const toSource = (source) => (source === undefined || source === null ? '' : String(source));
-
-// Same rule as isSameManga: a row or a query without source matches by id alone
-const MATCH = "manga_id = ? AND (source = ? OR source = '' OR ? = '')";
-const matchParams = (mangaId, source) => [String(mangaId), source, source];
 
 // Retrieves all saved manga from the library, ordered by the last read date.
 export const getSavedLibrary = async () => {
@@ -14,7 +9,7 @@ export const getSavedLibrary = async () => {
     const rows = await db.getAllAsync(
       `SELECT manga_id, source, slug, title, cover_url, last_read
        FROM library
-       ORDER BY COALESCE(last_read, 0) DESC, rowid ASC`
+       ORDER BY COALESCE(last_read, 0) DESC, rowid DESC`
     );
     return rows.map((row) => ({
       id: row.manga_id,

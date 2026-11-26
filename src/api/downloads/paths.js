@@ -1,5 +1,5 @@
 import * as FileSystem from 'expo-file-system/legacy';
-import { getMangaKey, isSameManga } from '../mangaKey';
+import { getMangaKey } from '../mangaKey';
 
 export const DOWNLOAD_FOLDER = FileSystem.documentDirectory + 'manga_downloads/';
 
@@ -18,8 +18,6 @@ export const getPageFileName = (pageNumber) => `page_${String(pageNumber - 1).pa
 
 export const getMangaFolderName = (mangaId, source) => toSafeName(getMangaKey({ id: mangaId, source }));
 
-export const isEntryOf = (mangaId, source) => (entry) => isSameManga(entry, { id: mangaId, source });
-
 // New entries store the cover file name; legacy entries only have an absolute file:// URI
 export const getCoverFileName = (entry) => {
   if (entry.coverFile) return entry.coverFile;
@@ -33,10 +31,9 @@ export const getChapterFolderUri = (mangaId, chapterId, storedFolder) => {
   return FileSystem.documentDirectory + relativePath;
 };
 
-export const isFolderInUse = (db, ignoredIndex, folderUri) => db.some((entry, index) => (
-  index !== ignoredIndex && entry.chapters.some((chapter) => (
-    getChapterFolderUri(entry.id, chapter.id, chapter.folder).startsWith(folderUri)
-  ))
+// chapterRows: { manga_id, chapter_id, folder } of every other downloaded manga
+export const isFolderInUse = (chapterRows, folderUri) => chapterRows.some((row) => (
+  getChapterFolderUri(row.manga_id, row.chapter_id, row.folder).startsWith(folderUri)
 ));
 
 export const ensureDownloadsDirExists = async () => {

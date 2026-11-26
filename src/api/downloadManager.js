@@ -1,24 +1,41 @@
 import * as FileSystem from 'expo-file-system/legacy';
+import { downloadSingleChapter, isChapterComplete } from './downloads/chapterDownloader';
+import {
+  countChapters,
+  deleteChapterRows,
+  deleteManga,
+  findDownloadedManga,
+  getChapter,
+  getChapters,
+  getDownloadedManga,
+  getOtherChapterLocations,
+  insertManga,
+  saveChapter,
+} from './downloads/downloadsStore';
 import {
   DOWNLOAD_FOLDER,
   ensureDownloadsDirExists,
   getChapterFolderUri,
-  getCoverFileName,
   getMangaFolderName,
   getPageFileName,
   isFolderInUse,
 } from './downloads/paths';
-import {
-  findDownloadedManga,
-  findDownloadedMangaIndex,
-  getDownloadedManga,
-  getRawDownloadsDB,
-  saveDownloadsDB,
-} from './downloads/downloadsStore';
-import { downloadSingleChapter, isChapterComplete } from './downloads/chapterDownloader';
-import { logChapterStorage } from './downloads/diagnostics';
 
 export { getMangaFolderName };
+
+// Saves the cover next to the chapters; returns its file name, or null to keep the remote URL
+const downloadCover = async (manga, mangaFolderName) => {
+  const coverFile = `cover_${mangaFolderName}.jpg`;
+  const localCoverUri = DOWNLOAD_FOLDER + coverFile;
+  try {
+    const result = await FileSystem.downloadAsync(manga.coverUrl, localCoverUri);
+    if (result.status === 200) return coverFile;
+    await FileSystem.deleteAsync(localCoverUri, { idempotent: true });
+  } catch (e) {
+    console.warn("Unable to download cover, using remote URL", e);
+  }
+  return null;
+};
 
 export const DownloadManager = {
   async dirExist() {
@@ -35,40 +52,22 @@ export const DownloadManager = {
     }
     await DownloadManager.dirExist();
 
-    const downloadsDB = await getRawDownloadsDB();
     const mangaFolderName = getMangaFolderName(manga.id, manga.source);
+    let localManga = await findDownloadedManga(manga.id, manga.source);
 
-    let localManga = findDownloadedManga(downloadsDB, manga.id, manga.source);
-    if (!localManga) {
-      const coverFile = `cover_${mangaFolderName}.jpg`;
-      const localCoverUri = DOWNLOAD_FOLDER + coverFile;
-      let coverUri = manga.coverUrl;
-      let storedCoverFile = null;
-      try {
-        const coverResult = await FileSystem.downloadAsync(manga.coverUrl, localCoverUri);
-        if (coverResult.status === 200) {
-          coverUri = localCoverUri;
-          storedCoverFile = coverFile;
-        } else {
-          await FileSystem.deleteAsync(localCoverUri, { idempotent: true });
-        }
-      } catch (e) {
-        console.warn("Unable to download cover, using remote URL", e);
-      }
-      localManga = {
-        id: manga.id,
-        title: manga.title,
-        coverUrl: coverUri,
-        coverFile: storedCoverFile,
-        source: 'local',
-        originalSource: manga.source,
-        chapters: []
-      };
-      downloadsDB.push(localManga);
-    }
+    // A new manga entry is written only once its first chapter is complete
+    const newManga = localManga ? null : {
+      source: manga.source,
+      id: manga.id,
+      title: manga.title,
+      coverUrl: manga.coverUrl,
+      coverFile: await downloadCover(manga, mangaFolderName),
+    };
 
     for (const chapter of chapters) {
-      const existing = localManga.chapters.find((c) => c.id === chapter.id);
+      const existing = localManga
+        ? await getChapter(localManga.source, localManga.id, chapter.id)
+        : null;
       if (existing && await DownloadManager.isChapterComplete(manga.id, existing)) {
         skipped.push(chapter.number);
         continue;
@@ -79,16 +78,20 @@ export const DownloadManager = {
           manga,
           chapter,
           mangaFolderName,
-          localManga,
+          previousChapter: existing,
           onProgress
         });
 
-        localManga.chapters = localManga.chapters.filter((c) => c.id !== chapter.id);
-        localManga.chapters.push(chapterEntry);
-        await saveDownloadsDB(downloadsDB);
+        if (!localManga) localManga = await insertManga(newManga);
+        await saveChapter(localManga.source, localManga.id, chapterEntry);
       } catch (error) {
         failed.push(chapter.number);
       }
+    }
+
+    // Nothing was saved for a new manga: drop the cover downloaded for it
+    if (!localManga && newManga.coverFile) {
+      await FileSystem.deleteAsync(DOWNLOAD_FOLDER + newManga.coverFile, { idempotent: true });
     }
 
     if (onProgress) {
@@ -99,10 +102,10 @@ export const DownloadManager = {
 
   async getDownloadedChapterIds(mangaId, source) {
     try {
-      const db = await getRawDownloadsDB();
-      const localManga = findDownloadedManga(db, mangaId, source);
-      if (!localManga) return [];
-      return localManga.chapters.map((c) => c.id);
+      const manga = await findDownloadedManga(mangaId, source);
+      if (!manga) return [];
+      const chapters = await getChapters(manga.source, manga.id);
+      return chapters.map((c) => c.id);
     } catch (e) {
       console.error("Download ID retrieval error:", e);
       return [];
@@ -111,23 +114,17 @@ export const DownloadManager = {
 
   async getLocalChapterImages(mangaId, chapterId, source) {
     try {
-      const db = await getRawDownloadsDB();
-      const localManga = findDownloadedManga(db, mangaId, source);
-      if (!localManga) return [];
+      const manga = await findDownloadedManga(mangaId, source);
+      if (!manga) return [];
+      const chapter = await getChapter(manga.source, manga.id, chapterId);
+      if (!chapter) return [];
 
-      const localChapter = localManga.chapters.find((c) => c.id === chapterId);
-      if (!localChapter) return [];
-      const folderUri = getChapterFolderUri(mangaId, chapterId, localChapter.folder);
-      const pages = localChapter.pages.map((p) => ({
-        page: p.page,
-        url: folderUri + getPageFileName(p.page)
+      // Pages are numbered 1..pageCount, so the file paths can be rebuilt from the folder
+      const folderUri = getChapterFolderUri(mangaId, chapterId, chapter.folder);
+      return Array.from({ length: chapter.pageCount }, (_, i) => ({
+        page: i + 1,
+        url: folderUri + getPageFileName(i + 1),
       }));
-
-      if (__DEV__) {
-        await DownloadManager.logChapterStorage(folderUri, localChapter.pages[0]?.url, pages[0]?.url);
-      }
-
-      return pages;
     } catch (error) {
       console.error("Local chapter reading error:", error);
       return [];
@@ -140,41 +137,36 @@ export const DownloadManager = {
 
   async deleteChapters(mangaId, chapterIds, source) {
     try {
-      const db = await getRawDownloadsDB();
-      const mangaIndex = findDownloadedMangaIndex(db, mangaId, source);
-      if (mangaIndex === -1) return;
+      const manga = await findDownloadedManga(mangaId, source);
+      if (!manga) return;
 
-      const manga = db[mangaIndex];
+      const chapters = await getChapters(manga.source, manga.id);
       for (const chapId of chapterIds) {
-        const entry = manga.chapters.find((c) => c.id === chapId);
+        const entry = chapters.find((c) => c.id === chapId);
         await FileSystem.deleteAsync(
-          getChapterFolderUri(mangaId, chapId, entry?.folder),
+          getChapterFolderUri(manga.id, chapId, entry?.folder),
           { idempotent: true }
         );
       }
+      await deleteChapterRows(manga.source, manga.id, chapterIds);
 
-      manga.chapters = manga.chapters.filter((c) => !chapterIds.includes(c.id));
-      if (manga.chapters.length === 0) {
-        const coverFile = getCoverFileName(manga);
-        if (coverFile) {
-          await FileSystem.deleteAsync(DOWNLOAD_FOLDER + coverFile, { idempotent: true });
+      if (await countChapters(manga.source, manga.id) === 0) {
+        if (manga.coverFile) {
+          await FileSystem.deleteAsync(DOWNLOAD_FOLDER + manga.coverFile, { idempotent: true });
         }
 
+        const others = await getOtherChapterLocations(manga.source, manga.id);
         const mangaFolders = [
-          DOWNLOAD_FOLDER + `${mangaId}/`,                                              // legacy layout
-          DOWNLOAD_FOLDER + `${getMangaFolderName(mangaId, manga.originalSource)}/`    // layout with source
+          DOWNLOAD_FOLDER + `${manga.id}/`,                                          // legacy layout
+          DOWNLOAD_FOLDER + `${getMangaFolderName(manga.id, manga.source)}/`         // layout with source
         ];
         for (const folderUri of mangaFolders) {
-          if (!isFolderInUse(db, mangaIndex, folderUri)) {
+          if (!isFolderInUse(others, folderUri)) {
             await FileSystem.deleteAsync(folderUri, { idempotent: true });
           }
         }
-        db.splice(mangaIndex, 1);
-      } else {
-        db[mangaIndex] = manga;
+        await deleteManga(manga.source, manga.id);
       }
-
-      await saveDownloadsDB(db);
     } catch (error) {
       console.error("Error:", error);
     }
@@ -182,9 +174,5 @@ export const DownloadManager = {
 
   async isChapterComplete(mangaId, chapterEntry) {
     return isChapterComplete(mangaId, chapterEntry);
-  },
-
-  async logChapterStorage(folderUri, storedUrl, rebuiltUrl) {
-    return logChapterStorage(folderUri, storedUrl, rebuiltUrl);
   },
 };

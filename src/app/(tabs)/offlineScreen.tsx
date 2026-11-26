@@ -21,7 +21,7 @@ interface LocalChapter {
   number: string;
   title: string;
   date: string;
-  pages: any[];
+  pageCount: number;
 }
 
 const OfflineScreen = () => {

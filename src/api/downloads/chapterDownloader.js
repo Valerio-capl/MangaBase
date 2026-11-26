@@ -25,7 +25,7 @@ export const isChapterComplete = async (mangaId, chapterEntry) => {
   try {
     const folderUri = getChapterFolderUri(mangaId, chapterEntry.id, chapterEntry.folder);
     const entries = await FileSystem.readDirectoryAsync(folderUri);
-    return chapterEntry.pages.length > 0 && entries.length === chapterEntry.pages.length;
+    return chapterEntry.pageCount > 0 && entries.length === chapterEntry.pageCount;
   } catch (e) {
     return false;
   }
@@ -35,7 +35,7 @@ export const downloadSingleChapter = async ({
   manga,
   chapter,
   mangaFolderName,
-  localManga,
+  previousChapter,
   onProgress
 }) => {
   if (onProgress) onProgress(`Downloading ${chapter.title}...`);
@@ -78,10 +78,9 @@ export const downloadSingleChapter = async ({
     }
 
     // Replace the previous copy only now that the new one is complete
-    const previous = localManga.chapters.find((c) => c.id === chapter.id);
-    if (previous) {
+    if (previousChapter) {
       await FileSystem.deleteAsync(
-        getChapterFolderUri(manga.id, previous.id, previous.folder),
+        getChapterFolderUri(manga.id, previousChapter.id, previousChapter.folder),
         { idempotent: true }
       );
     }
@@ -93,7 +92,7 @@ export const downloadSingleChapter = async ({
       number: chapter.number,
       title: chapter.title,
       folder: relativeFolder,
-      pages: results.map((r) => r.value),
+      pageCount: images.length,
       date: new Date().toISOString()
     };
   } catch (error) {

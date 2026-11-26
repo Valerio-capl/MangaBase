@@ -25,3 +25,10 @@ export const isSameManga = (a, b) => {
   if (!sourceA || !sourceB) return true;
   return sourceA === sourceB;
 };
+
+// SQL twin of isSameManga: a row or a query without source matches by id alone
+export const SQL_MATCH = "manga_id = ? AND (source = ? OR source = '' OR ? = '')";
+export const matchParams = (mangaId, source) => {
+  const sourceName = clean(source);
+  return [String(mangaId), sourceName, sourceName];
+};

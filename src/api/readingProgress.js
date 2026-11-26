@@ -1,8 +1,5 @@
 import { getDb } from './db/database';
-import { resolveSource } from './mangaKey';
-
-// Same rule as the library: a row or a query without source matches by id alone
-const MATCH = "manga_id = ? AND (source = ? OR source = '' OR ? = '')";
+import { SQL_MATCH as MATCH, resolveSource } from './mangaKey';
 
 // Chapter ids in reading order, the most recently read one last
 export const getReadChapters = async (mangaId, source, originalSource) => {
