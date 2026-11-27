@@ -1,4 +1,5 @@
 import * as SQLite from 'expo-sqlite';
+import { migrateLegacyData } from './legacyMigration';
 
 const DB_NAME = 'mangabase.db';
 const SCHEMA_VERSION = 1;
@@ -59,6 +60,11 @@ const openAndPrepare = async () => {
       if (currentVersion < 1) await db.execAsync(SCHEMA_V1);
       await db.execAsync(`PRAGMA user_version = ${SCHEMA_VERSION}`);
     });
+  }
+  try {
+    await migrateLegacyData(db);
+  } catch (error) {
+    console.error('[db] legacy migration failed:', error);
   }
   return db;
 };
