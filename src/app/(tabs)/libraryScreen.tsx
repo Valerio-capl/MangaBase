@@ -1,6 +1,6 @@
+import { getSavedLibrary } from '@/src/api/libraryStorage';
 import { getMangaKey } from '@/src/api/mangaKey';
 import MangaCard from '@/src/components/mangaCard';
-import { getSavedLibrary } from '@/src/api/libraryStorage';
 import { useFocusEffect, useRouter } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { ActivityIndicator, FlatList, StyleSheet, Text, useWindowDimensions, View } from 'react-native';
@@ -26,7 +26,6 @@ const LibraryScreen = () => {
 
   const loadLibrary = async () => {
     try {
-      setLoading(true);
       const saved = await getSavedLibrary();
       setLibrary(saved);
     } catch (error) {
