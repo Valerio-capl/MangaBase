@@ -7,14 +7,15 @@ MangaBase è un'applicazione React Native creata con Expo, progettata per tracci
 * **Multi-Source Architecture:** Architettura modulare progettata per supportare molteplici moduli di fornitura contenuti.
 * **Offline Reading:** Scarica i capitoli completi in locale sul dispositivo utilizzando il file system per la lettura senza connessione internet.
 * **Library Management:** Salva i tuoi manga preferiti e traccia automaticamente i progressi di lettura e gli ultimi capitoli letti.
+* **Database locale:** Libreria, progressi di lettura e download sono salvati in un database SQLite locale. I dati salvati dalle versioni precedenti vengono migrati automaticamente al primo avvio.
 * **Discover Section:** Integrazione con l'API AniList per recuperare e mostrare i manga più popolari del momento e di tutti i tempi.
 * **Custom Reader:** Lettore di immagini integrato con funzionalità di ridimensionamento dinamico delle immagini e pre-fetching per uno scorrimento fluido.
 
 ## Project Structure
 
-* `/src/api/` - Contiene il SourceManager, il DownloadManager e un file blueprint `sourceTemplate.md` che spiega la struttura richiesta per implementare i moduli di contenuto personalizzati
+* `/src/api/` - Contiene il SourceManager, il DownloadManager e un file blueprint `sourceTemplate.md` che spiega la struttura richiesta per implementare i moduli di contenuto personalizzati. Contiene anche il client HTTP condiviso (http/), la connessione e la migrazione SQLite (db/), la logica dei download (downloads/) e il salvataggio di libreria e progressi di lettura.
 * `/src/app/` - Schermate di Expo Router (Tabs, Reader, Details, Terms of Service).
-* `/src/components/` - Componenti UI riutilizzabili come MangaCard e SearchBar.
+* `/src/components/` - Componenti UI riutilizzabili come MangaCard e SearchBar, più i blocchi delle schermate dei dettagli (details/) e del lettore (reader/).
 * `/src/errors/` - Classi di errore personalizzate e UI per la gestione globale degli errori.
 * `/assets/` - Asset statici, icone dell'app e splash screen.
 
